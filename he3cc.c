@@ -109,7 +109,7 @@ Token* tokenize() {
             continue;
         }
 
-        if (strchr("+-*/", *p)) {
+        if (strchr("+-*/()", *p)) {
             cur = new_token(TK_RESERVED, cur, p++);
             continue;
         }
@@ -185,20 +185,26 @@ Node* expr() {
 
 // mul = primary ("*" primary | "/" primary)*
 Node* mul() {
-    Node* node = new_node_num(expect_number());
+    Node* node = primary();
 
     for (;;) {
         if (consume('*'))
-            node = new_node(ND_MUL, node, new_node_num(expect_number()));
+            node = new_node(ND_MUL, node, primary());
         else if (consume('/'))
-            node = new_node(ND_DIV, node, new_node_num(expect_number()));
+            node = new_node(ND_DIV, node, primary());
         else
             return node;
     }
 }
 
-// primary = num
+// primary = "(" expr ")" | num
 Node* primary() {
+    if (consume('(')) {
+        Node* node = expr();
+        expect(')');
+        return node;
+    }
+
     return new_node_num(expect_number());
 }
 
