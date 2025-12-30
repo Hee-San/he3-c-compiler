@@ -67,7 +67,7 @@ Node* stmt() {
         return node;
     }
 
-    Node* node = expr();
+    Node* node = new_node_unary_op(ND_EXPR_STMT, expr());
     expect(";");
     return node;
 }

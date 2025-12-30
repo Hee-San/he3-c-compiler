@@ -16,6 +16,11 @@ void gen(Node* node) {
             printf("  mov x0,  #%d\n", node->val);
             gen_push("x0");
             return;
+        case ND_EXPR_STMT:
+            gen(node->lhs);
+            // 式文は結果を返さない
+            printf("  add sp, sp, #16\n");  // スタックポインタを16バイト上げる (領域解放)
+            return;
         case ND_RETURN:
             gen(node->lhs);
             gen_pop("x0");
@@ -81,9 +86,11 @@ void codegen() {
     // 各stmtのコードを生成
     for (int i = 0; code[i]; i++) {
         gen(code[i]);
-        gen_pop("x0");  // 式の結果をスタックから捨てる
     }
 
-    // 最後の式の結果がx0に残っているのでそれを返す
+    // returnステートメントがない場合は0を返す
+    // (C99以降の仕様: main関数はreturnなしで終了すると暗黙的に0を返す)
+    // TODO: 将来、一般的な関数を実装する際は、main関数のみこの処理を行うようにする
+    printf("  mov x0, #0\n");
     printf("  ret\n");
 }
