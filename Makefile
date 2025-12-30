@@ -31,7 +31,7 @@ test: $(TARGET)
 
 # コンパイラの実行（引数が必要な場合）
 run: $(TARGET)
-	./$(TARGET) $(filter-out $@,$(MAKECMDGOALS))
+	./$(TARGET) "$(filter-out $@,$(MAKECMDGOALS))"
 
 # make run の後の引数を無視するためのダミーターゲット
 %:
