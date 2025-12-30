@@ -2,7 +2,7 @@
 
 # コンパイラの設定
 CC = gcc
-CFLAGS = -std=c11 -g -Wall -Wextra
+CFLAGS = -std=c11 -g -static
 TARGET = he3cc
 
 # ソースファイルとオブジェクトファイル
@@ -14,7 +14,10 @@ all: $(TARGET)
 
 # コンパイラのビルド
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) -o $(TARGET) $(OBJS) $(LDFLAGS)
+
+# 全てのオブジェクトファイルはhe3cc.hに依存
+$(OBJS): he3cc.h
 
 # オブジェクトファイルのビルド
 %.o: %.c
@@ -22,8 +25,7 @@ $(TARGET): $(OBJS)
 
 # クリーンアップ
 clean:
-	rm -f $(TARGET) $(OBJS) *.o
-	rm -f tmp*
+	rm -f $(TARGET) *.o *~ tmp*
 
 # テストの実行
 test: $(TARGET)
