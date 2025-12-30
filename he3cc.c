@@ -109,7 +109,7 @@ Token* tokenize() {
             continue;
         }
 
-        if (*p == '+' || *p == '-') {
+        if (strchr("+-*/", *p)) {
             cur = new_token(TK_RESERVED, cur, p++);
             continue;
         }
@@ -135,6 +135,8 @@ Token* tokenize() {
 typedef enum {
     ND_ADD,  // +
     ND_SUB,  // -
+    ND_MUL,  // *
+    ND_DIV,  // /
     ND_NUM,  // 整数
 } NodeKind;
 
@@ -163,17 +165,29 @@ Node* new_node_num(int val) {
     return node;
 }
 
-// expr = num ("+" num | "-" num)*
-Node* expr() {
-    // 最初のトークンは数でなければならない
+// mul = num ("*" num | "/" num)*
+Node* mul() {
     Node* node = new_node_num(expect_number());
 
-    // 左結合の二項演算子
+    for (;;) {
+        if (consume('*'))
+            node = new_node(ND_MUL, node, new_node_num(expect_number()));
+        else if (consume('/'))
+            node = new_node(ND_DIV, node, new_node_num(expect_number()));
+        else
+            return node;
+    }
+}
+
+// expr = mul ("+" mul | "-" mul)*
+Node* expr() {
+    Node* node = mul();
+
     for (;;) {
         if (consume('+'))
-            node = new_node(ND_ADD, node, new_node_num(expect_number()));
+            node = new_node(ND_ADD, node, mul());
         else if (consume('-'))
-            node = new_node(ND_SUB, node, new_node_num(expect_number()));
+            node = new_node(ND_SUB, node, mul());
         else
             return node;
     }
@@ -214,6 +228,12 @@ void gen(Node* node) {
             break;
         case ND_SUB:
             printf("  sub x0, x0, x1\n");
+            break;
+        case ND_MUL:
+            printf("  mul x0, x0, x1\n");
+            break;
+        case ND_DIV:
+            printf("  sdiv x0, x0, x1\n");
             break;
     }
 
