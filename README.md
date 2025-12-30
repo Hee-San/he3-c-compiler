@@ -25,15 +25,18 @@ cc -o he3cc he3cc.c
 ## 使用方法
 
 ```bash
-./he3cc <入力> > tmp.s
+./he3cc "<入力>" > tmp.s
 cc -o tmp tmp.s
 ./tmp
 ```
 
-Makefileを使った実行：
+例：
 
 ```bash
-make run 123
+./he3cc "1+2*3" > tmp.s
+cc -o tmp tmp.s
+./tmp
+echo $?  # 終了コードとして結果が返される
 ```
 
 ## テスト
