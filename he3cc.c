@@ -127,6 +127,99 @@ Token* tokenize() {
     return head.next;
 }
 
+//
+// Parser
+//
+
+// 抽象構文木のノードの種類
+typedef enum {
+    ND_ADD,  // +
+    ND_SUB,  // -
+    ND_NUM,  // 整数
+} NodeKind;
+
+typedef struct Node Node;
+
+// 抽象構文木のノードの型
+struct Node {
+    NodeKind kind;  // ノードの型
+    Node* lhs;      // 左辺 (left-hand side)
+    Node* rhs;      // 右辺 (right-hand side)
+    int val;        // kindがND_NUMの場合のみ使う
+};
+
+Node* new_node(NodeKind kind, Node* lhs, Node* rhs) {
+    Node* node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    node->lhs = lhs;
+    node->rhs = rhs;
+    return node;
+}
+
+Node* new_node_num(int val) {
+    Node* node = calloc(1, sizeof(Node));
+    node->kind = ND_NUM;
+    node->val = val;
+    return node;
+}
+
+// expr = num ("+" num | "-" num)*
+Node* expr() {
+    // 最初のトークンは数でなければならない
+    Node* node = new_node_num(expect_number());
+
+    // 左結合の二項演算子
+    for (;;) {
+        if (consume('+'))
+            node = new_node(ND_ADD, node, new_node_num(expect_number()));
+        else if (consume('-'))
+            node = new_node(ND_SUB, node, new_node_num(expect_number()));
+        else
+            return node;
+    }
+}
+
+//
+// Code generator
+//
+
+void gen_push(char* register_name) {
+    printf("  sub sp, sp, #16\n");              // スタックポインタを16バイト下げる (領域確保)
+    printf("  str %s, [sp]\n", register_name);  // スタックに値を保存
+}
+
+void gen_pop(char* register_name) {
+    printf("  ldr %s, [sp]\n", register_name);  // スタックから値を復元
+    printf("  add sp, sp, #16\n");              // スタックポインタを16バイト上げる (領域解放)
+}
+
+void gen(Node* node) {
+    if (node->kind == ND_NUM) {
+        printf("  mov x0,  #%d\n", node->val);
+        gen_push("x0");
+        return;
+    }
+
+    gen(node->lhs);
+    gen(node->rhs);
+    gen_pop("x1");
+    gen_pop("x0");
+
+    switch (node->kind) {
+        case ND_NUM:
+            // ND_NUMは上で処理済みなのでここには来ない
+            break;
+        case ND_ADD:
+            printf("  add x0, x0, x1\n");
+            break;
+        case ND_SUB:
+            printf("  sub x0, x0, x1\n");
+            break;
+    }
+
+    gen_push("x0");
+}
+
 int main(int argc, char** argv) {
     if (argc != 2) {
         error("引数の個数が正しくありません");
@@ -137,26 +230,19 @@ int main(int argc, char** argv) {
     user_input = argv[1];
     token = tokenize();
 
+    // パースする
+    Node* node = expr();
+
     // アセンブリの前半部分を出力
     printf(".globl main\n");
     printf("main:\n");
 
-    // 式の最初は数でなければならないので、それをチェックして
-    // 最初のmov命令を出力
-    printf("  mov x0, #%d\n", expect_number());
+    // 抽象構文木を下りながらコード生成
+    gen(node);
 
-    // `+ <数>`あるいは`- <数>`というトークンの並びを消費しつつ
-    // アセンブリを出力
-    while (!at_eof()) {
-        if (consume('+')) {
-            printf("  add x0, x0, #%d\n", expect_number());
-            continue;
-        }
-
-        expect('-');
-        printf("  sub x0, x0, #%d\n", expect_number());
-    }
-
+    // スタックトップに計算結果が残っているはずなので、
+    // それをx0にロードしてプログラムを終了する
+    gen_pop("x0");
     printf("  ret\n");
     return 0;
 }
