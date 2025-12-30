@@ -97,7 +97,7 @@ Token* tokenize() {
         }
 
         // 1文字の記号
-        if (strchr("+-*/()<>", *p)) {
+        if (strchr("+-*/()<>;", *p)) {
             cur = new_token(TK_RESERVED, cur, p, 1);
             p++;
             continue;

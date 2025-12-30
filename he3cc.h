@@ -66,10 +66,12 @@ struct Node {
     int val;        // kindがND_NUMの場合のみ使う
 };
 
-Node* expr();
+void program();
+
+extern Node* code[100];
 
 //
 // codegen.c
 //
 
-void codegen(Node* node);
+void codegen();

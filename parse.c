@@ -15,6 +15,8 @@ Node* new_node_num(int val) {
     return node;
 }
 
+// program    = stmt*
+// stmt       = expr ";"
 // expr       = equality
 // equality   = relational ("==" relational | "!=" relational)*
 // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
@@ -23,6 +25,7 @@ Node* new_node_num(int val) {
 // unary      = ("+" | "-")? primary
 // primary    = num | "(" expr ")"
 
+Node* stmt();
 Node* expr();
 Node* equality();
 Node* relational();
@@ -30,6 +33,24 @@ Node* add();
 Node* mul();
 Node* unary();
 Node* primary();
+
+Node* code[100];
+
+// program = stmt*
+void program() {
+    int i = 0;
+    while (!at_eof()) {
+        code[i++] = stmt();
+    }
+    code[i] = NULL;
+}
+
+// stmt = expr ";"
+Node* stmt() {
+    Node* node = expr();
+    expect(";");
+    return node;
+}
 
 // expr = equality
 Node* expr() {

@@ -67,16 +67,17 @@ void gen(Node* node) {
     gen_push("x0");
 }
 
-void codegen(Node* node) {
+void codegen() {
     // アセンブリの前半部分を出力
     printf(".globl main\n");
     printf("main:\n");
 
-    // 抽象構文木を下りながらコード生成
-    gen(node);
+    // 各stmtのコードを生成
+    for (int i = 0; code[i]; i++) {
+        gen(code[i]);
+        gen_pop("x0");  // 式の結果をスタックから捨てる
+    }
 
-    // スタックトップに計算結果が残っているはずなので、
-    // それをx0にロードしてプログラムを終了する
-    gen_pop("x0");
+    // 最後の式の結果がx0に残っているのでそれを返す
     printf("  ret\n");
 }
