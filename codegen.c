@@ -8,6 +8,32 @@ void gen_pop(char* register_name) {
     printf("  ldr %s, [sp], #16\n", register_name);  // x0 = *sp; sp += 16;
 }
 
+void gen_addr(Node* node) {
+    if (node->kind == ND_LOCAL_VAR) {
+        int offset = (node->name - 'a' + 1) * 8;
+        printf("  sub x0, x29, #%d\n", offset);
+        gen_push("x0");
+        return;
+    }
+
+    error("代入の左辺値が変数ではありません");
+}
+
+// スタックトップにあるアドレスから値をロードして、値をスタックにプッシュする
+void load() {
+    gen_pop("x0");               // スタックからアドレスを取り出してx0にロード
+    printf("  ldr x0, [x0]\n");  // x0が指すアドレスから値をロード
+    gen_push("x0");              // x0をスタックにプッシュ
+}
+
+// スタックトップにある値をスタック2番目にあるアドレスにストアして、値を再びスタックにプッシュする
+void store() {
+    gen_pop("x1");               // スタックから値を取り出してx1にロード
+    gen_pop("x0");               // スタックからアドレスを取り出してx0にロード
+    printf("  str x1, [x0]\n");  // x0が指すアドレスにx1の値をストア
+    gen_push("x1");              // x1をスタックにプッシュ
+}
+
 void gen(Node* node) {
     switch (node->kind) {
         case ND_NUM:
@@ -19,10 +45,19 @@ void gen(Node* node) {
             // 式文は結果を返さない
             printf("  add sp, sp, #16\n");  // スタックポインタを16バイト上げる (領域解放)
             return;
+        case ND_LOCAL_VAR:
+            gen_addr(node);
+            load();
+            return;
+        case ND_ASSIGN:
+            gen_addr(node->lhs);
+            gen(node->rhs);
+            store();
+            return;
         case ND_RETURN:
             gen(node->lhs);
             gen_pop("x0");
-            printf("  ret\n");
+            printf("  b .Lreturn\n");
             return;
     }
 
@@ -81,6 +116,12 @@ void codegen() {
     printf(".globl main\n");
     printf("main:\n");
 
+    // Prologue
+    // 変数26個分の領域を確保する
+    printf("  stp x29, x30, [sp, -16]!\n");  // フレームポインタとリターンアドレスを保存
+    printf("  mov x29, sp\n");
+    printf("  sub sp, sp, #416\n");  // 26 * 16 = 416バイト
+
     // 各stmtのコードを生成
     for (int i = 0; code[i]; i++) {
         gen(code[i]);
@@ -90,5 +131,10 @@ void codegen() {
     // (C99以降の仕様: main関数はreturnなしで終了すると暗黙的に0を返す)
     // TODO: 将来、一般的な関数を実装する際は、main関数のみこの処理を行うようにする
     printf("  mov x0, #0\n");
+
+    // Epilogue
+    printf("  .Lreturn:\n");
+    printf("  mov sp, x29\n");
+    printf("  ldp x29, x30, [sp], #16\n");
     printf("  ret\n");
 }

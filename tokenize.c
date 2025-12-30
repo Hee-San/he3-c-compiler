@@ -32,16 +32,28 @@ void error_at(char* loc, char* fmt, ...) {
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
 bool consume(char* op) {
-    if (token->kind != TK_RESERVED || strncmp(token->str, op, token->len) != 0)
+    if (token->kind != TK_RESERVED ||
+        strlen(op) != token->len ||
+        strncmp(token->str, op, token->len) != 0)
         return false;
     token = token->next;
     return true;
 }
 
+Token* consume_ident() {
+    if (token->kind != TK_IDENT)
+        return NULL;
+    Token* tok = token;
+    token = token->next;
+    return tok;
+}
+
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
 // それ以外の場合にはエラーを報告する。
 void expect(char* op) {
-    if (token->kind != TK_RESERVED || strncmp(token->str, op, token->len) != 0)
+    if (token->kind != TK_RESERVED ||
+        strlen(op) != token->len ||
+        strncmp(token->str, op, token->len) != 0)
         error_at(token->str, "'%s'ではありません", op);
     token = token->next;
 }
@@ -112,8 +124,15 @@ Token* tokenize() {
         }
 
         // 1文字の記号
-        if (strchr("+-*/()<>;", *p)) {
+        if (strchr("+-*/()<>;=", *p)) {
             cur = new_token(TK_RESERVED, cur, p, 1);
+            p++;
+            continue;
+        }
+
+        // 1文字の識別子
+        if ('a' <= *p && *p <= 'z') {
+            cur = new_token(TK_IDENT, cur, p, 1);
             p++;
             continue;
         }

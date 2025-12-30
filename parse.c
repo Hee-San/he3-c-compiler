@@ -29,18 +29,26 @@ Node* new_node_num(int val) {
     return node;
 }
 
+Node* new_local_var(char name) {
+    Node* node = new_node(ND_LOCAL_VAR);
+    node->name = name;
+    return node;
+}
+
 // program    = stmt*
 // stmt       = "return" expr ";" | expr ";"
-// expr       = equality
+// expr       = assign
+// assign     = equality ("=" assign)?
 // equality   = relational ("==" relational | "!=" relational)*
 // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 // add        = mul ("+" mul | "-" mul)*
 // mul        = unary ("*" unary | "/" unary)*
 // unary      = ("+" | "-")? primary
-// primary    = num | "(" expr ")"
+// primary    = "(" expr ")" | ident | num
 
 Node* stmt();
 Node* expr();
+Node* assign();
 Node* equality();
 Node* relational();
 Node* add();
@@ -72,9 +80,17 @@ Node* stmt() {
     return node;
 }
 
-// expr = equality
+// expr = assign
 Node* expr() {
-    return equality();
+    return assign();
+}
+
+// assign = equality ("=" assign)?
+Node* assign() {
+    Node* node = equality();
+    if (consume("="))
+        node = new_node_binary_op(ND_ASSIGN, node, assign());
+    return node;
 }
 
 // equality = relational ("==" relational | "!=" relational)*
@@ -146,13 +162,17 @@ Node* unary() {
     return primary();
 }
 
-// primary = "(" expr ")" | num
+// primary = "(" expr ")" | ident | num
 Node* primary() {
     if (consume("(")) {
         Node* node = expr();
         expect(")");
         return node;
     }
+
+    Token* tok = consume_ident();
+    if (tok)
+        return new_local_var(*tok->str);
 
     return new_node_num(expect_number());
 }
