@@ -97,6 +97,10 @@ Token* new_token(TokenKind kind, Token* cur, char* str, int len) {
     return tok;
 }
 
+bool startswith(char* p, char* q) {
+    return strncmp(p, q, strlen(q)) == 0;
+}
+
 // 入力文字列pをトークナイズしてそれを返す
 Token* tokenize() {
     char* p = user_input;
@@ -111,8 +115,16 @@ Token* tokenize() {
             continue;
         }
 
+        // 2文字の記号
+        if (startswith(p, "==") || startswith(p, "!=") ||
+            startswith(p, "<=") || startswith(p, ">=")) {
+            cur = new_token(TK_RESERVED, cur, p, 2);
+            p += 2;
+            continue;
+        }
+
         // 1文字の記号
-        if (strchr("+-*/()", *p)) {
+        if (strchr("+-*/()<>", *p)) {
             cur = new_token(TK_RESERVED, cur, p, 1);
             p++;
             continue;
@@ -138,6 +150,13 @@ Token* tokenize() {
 //
 // Parser
 //
+// expr       = equality
+// equality   = relational ("==" relational | "!=" relational)*
+// relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+// add        = mul ("+" mul | "-" mul)*
+// mul        = unary ("*" unary | "/" unary)*
+// unary      = ("+" | "-")? primary
+// primary    = num | "(" expr ")"
 
 // 抽象構文木のノードの種類
 typedef enum {
@@ -145,6 +164,12 @@ typedef enum {
     ND_SUB,  // -
     ND_MUL,  // *
     ND_DIV,  // /
+    ND_EQ,   // ==
+    ND_NE,   // !=
+    ND_LT,   // <
+    ND_LE,   // <=
+    ND_GT,   // >
+    ND_GE,   // >=
     ND_NUM,  // 整数
 } NodeKind;
 
@@ -174,12 +199,52 @@ Node* new_node_num(int val) {
 }
 
 Node* expr();
+Node* equality();
+Node* relational();
+Node* add();
 Node* mul();
 Node* unary();
 Node* primary();
 
-// expr = mul ("+" mul | "-" mul)*
+// expr = equality
 Node* expr() {
+    return equality();
+}
+
+// equality = relational ("==" relational | "!=" relational)*
+Node* equality() {
+    Node* node = relational();
+
+    for (;;) {
+        if (consume("=="))
+            node = new_node(ND_EQ, node, relational());
+        else if (consume("!="))
+            node = new_node(ND_NE, node, relational());
+        else
+            return node;
+    }
+}
+
+// relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+Node* relational() {
+    Node* node = add();
+
+    for (;;) {
+        if (consume("<"))
+            node = new_node(ND_LT, node, add());
+        else if (consume("<="))
+            node = new_node(ND_LE, node, add());
+        else if (consume(">"))
+            node = new_node(ND_GT, node, add());
+        else if (consume(">="))
+            node = new_node(ND_GE, node, add());
+        else
+            return node;
+    }
+}
+
+// add = mul ("+" mul | "-" mul)*
+Node* add() {
     Node* node = mul();
 
     for (;;) {
@@ -267,6 +332,30 @@ void gen(Node* node) {
             break;
         case ND_DIV:
             printf("  sdiv x0, x0, x1\n");
+            break;
+        case ND_EQ:
+            printf("  cmp x0, x1\n");
+            printf("  cset x0, eq\n");
+            break;
+        case ND_NE:
+            printf("  cmp x0, x1\n");
+            printf("  cset x0, ne\n");
+            break;
+        case ND_LT:
+            printf("  cmp x0, x1\n");
+            printf("  cset x0, lt\n");
+            break;
+        case ND_LE:
+            printf("  cmp x0, x1\n");
+            printf("  cset x0, le\n");
+            break;
+        case ND_GT:
+            printf("  cmp x0, x1\n");
+            printf("  cset x0, gt\n");
+            break;
+        case ND_GE:
+            printf("  cmp x0, x1\n");
+            printf("  cset x0, ge\n");
             break;
     }
 
