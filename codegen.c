@@ -1,13 +1,11 @@
 #include "he3cc.h"
 
 void gen_push(char* register_name) {
-    printf("  sub sp, sp, #16\n");              // スタックポインタを16バイト下げる (領域確保)
-    printf("  str %s, [sp]\n", register_name);  // スタックに値を保存
+    printf("  str %s, [sp, -16]!\n", register_name);  // sp -= 16; *sp = x0;
 }
 
 void gen_pop(char* register_name) {
-    printf("  ldr %s, [sp]\n", register_name);  // スタックから値を復元
-    printf("  add sp, sp, #16\n");              // スタックポインタを16バイト上げる (領域解放)
+    printf("  ldr %s, [sp], #16\n", register_name);  // x0 = *sp; sp += 16;
 }
 
 void gen(Node* node) {
