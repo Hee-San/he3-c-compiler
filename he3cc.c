@@ -165,19 +165,9 @@ Node* new_node_num(int val) {
     return node;
 }
 
-// mul = num ("*" num | "/" num)*
-Node* mul() {
-    Node* node = new_node_num(expect_number());
-
-    for (;;) {
-        if (consume('*'))
-            node = new_node(ND_MUL, node, new_node_num(expect_number()));
-        else if (consume('/'))
-            node = new_node(ND_DIV, node, new_node_num(expect_number()));
-        else
-            return node;
-    }
-}
+Node* expr();
+Node* mul();
+Node* primary();
 
 // expr = mul ("+" mul | "-" mul)*
 Node* expr() {
@@ -191,6 +181,25 @@ Node* expr() {
         else
             return node;
     }
+}
+
+// mul = primary ("*" primary | "/" primary)*
+Node* mul() {
+    Node* node = new_node_num(expect_number());
+
+    for (;;) {
+        if (consume('*'))
+            node = new_node(ND_MUL, node, new_node_num(expect_number()));
+        else if (consume('/'))
+            node = new_node(ND_DIV, node, new_node_num(expect_number()));
+        else
+            return node;
+    }
+}
+
+// primary = num
+Node* primary() {
+    return new_node_num(expect_number());
 }
 
 //
