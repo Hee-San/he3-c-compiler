@@ -11,10 +11,16 @@ void gen_pop(char* register_name) {
 }
 
 void gen(Node* node) {
-    if (node->kind == ND_NUM) {
-        printf("  mov x0,  #%d\n", node->val);
-        gen_push("x0");
-        return;
+    switch (node->kind) {
+        case ND_NUM:
+            printf("  mov x0,  #%d\n", node->val);
+            gen_push("x0");
+            return;
+        case ND_RETURN:
+            gen(node->lhs);
+            gen_pop("x0");
+            printf("  ret\n");
+            return;
     }
 
     gen(node->lhs);

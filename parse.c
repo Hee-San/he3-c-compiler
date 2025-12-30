@@ -1,11 +1,13 @@
 #include "he3cc.h"
 
+// 新しいノードを生成する関数
 Node* new_node(NodeKind kind) {
     Node* node = calloc(1, sizeof(Node));
     node->kind = kind;
     return node;
 }
 
+// 二項演算子ノードを生成する関数
 Node* new_node_binary_op(NodeKind kind, Node* lhs, Node* rhs) {
     Node* node = new_node(kind);
     node->lhs = lhs;
@@ -13,6 +15,14 @@ Node* new_node_binary_op(NodeKind kind, Node* lhs, Node* rhs) {
     return node;
 }
 
+// 単項演算子ノードを生成する関数
+Node* new_node_unary_op(NodeKind kind, Node* operand) {
+    Node* node = new_node(kind);
+    node->lhs = operand;
+    return node;
+}
+
+// 数値ノードを生成する関数
 Node* new_node_num(int val) {
     Node* node = new_node(ND_NUM);
     node->val = val;
@@ -20,7 +30,7 @@ Node* new_node_num(int val) {
 }
 
 // program    = stmt*
-// stmt       = expr ";"
+// stmt       = "return" expr ";" | expr ";"
 // expr       = equality
 // equality   = relational ("==" relational | "!=" relational)*
 // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
@@ -49,8 +59,14 @@ void program() {
     code[i] = NULL;
 }
 
-// stmt = expr ";"
+// stmt = "return" expr ";" | expr ";"
 Node* stmt() {
+    if (consume("return")) {
+        Node* node = new_node_unary_op(ND_RETURN, expr());
+        expect(";");
+        return node;
+    }
+
     Node* node = expr();
     expect(";");
     return node;
