@@ -59,7 +59,7 @@ void error(char* fmt, ...) {
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
 bool consume(char* op) {
-    if (token->kind != TK_RESERVED || strncmp(token->str, op, strlen(op)) != 0)
+    if (token->kind != TK_RESERVED || strncmp(token->str, op, token->len) != 0)
         return false;
     token = token->next;
     return true;
@@ -68,7 +68,7 @@ bool consume(char* op) {
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
 // それ以外の場合にはエラーを報告する。
 void expect(char* op) {
-    if (token->kind != TK_RESERVED || strncmp(token->str, op, strlen(op)) != 0)
+    if (token->kind != TK_RESERVED || strncmp(token->str, op, token->len) != 0)
         error_at(token->str, "'%s'ではありません", op);
     token = token->next;
 }
