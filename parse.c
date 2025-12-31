@@ -1,5 +1,18 @@
 #include "he3cc.h"
 
+LocalVar* local_vars;
+
+// 既存のローカル変数を名前で検索する関数
+LocalVar* find_local_var(Token* tok) {
+    for (LocalVar* var = local_vars; var; var = var->next) {
+        if (tok->len == strlen(var->name) &&
+            strncmp(tok->str, var->name, tok->len) == 0) {
+            return var;
+        }
+    }
+    return NULL;
+}
+
 // 新しいノードを生成する関数
 Node* new_node(NodeKind kind) {
     Node* node = calloc(1, sizeof(Node));
@@ -29,10 +42,21 @@ Node* new_node_num(int val) {
     return node;
 }
 
-Node* new_local_var(char name) {
+// ローカル変数ノードを生成する関数
+Node* new_local_var(LocalVar* var) {
     Node* node = new_node(ND_LOCAL_VAR);
-    node->name = name;
+    node->var = var;
     return node;
+}
+
+// 新しいローカル変数をローカル変数リストに追加する関数
+LocalVar* push_local_var(Token* tok) {
+    LocalVar* var = calloc(1, sizeof(LocalVar));
+    var->next = local_vars;
+    var->name = strndup(tok->str, tok->len);
+    // オフセットの割り当てはパーサーの役割ではないので、ここでは行わない
+    local_vars = var;
+    return var;
 }
 
 // program    = stmt*
@@ -58,6 +82,8 @@ Node* primary();
 
 // program = stmt*
 Program* program() {
+    local_vars = NULL;
+
     Node head;
     head.next = NULL;
     Node* cur = &head;
@@ -69,6 +95,7 @@ Program* program() {
 
     Program* prog = calloc(1, sizeof(Program));
     prog->node = head.next;
+    prog->local_vars = local_vars;
     return prog;
 }
 
@@ -176,8 +203,13 @@ Node* primary() {
     }
 
     Token* tok = consume_ident();
-    if (tok)
-        return new_local_var(*tok->str);
+    if (tok) {
+        LocalVar* var = find_local_var(tok);
+        if (!var) {
+            var = push_local_var(tok);
+        }
+        return new_local_var(var);
+    }
 
     return new_node_num(expect_number());
 }

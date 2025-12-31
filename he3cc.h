@@ -33,6 +33,7 @@ bool consume(char* op);
 void expect(char* op);
 int expect_number();
 bool at_eof();
+char* strndup(char* p, int len);
 Token* consume_ident();
 Token* new_token(TokenKind kind, Token* cur, char* str, int len);
 Token* tokenize();
@@ -63,6 +64,14 @@ typedef enum {
     ND_NUM,        // 整数
 } NodeKind;
 
+// ローカル変数を表す型
+typedef struct LocalVar LocalVar;
+struct LocalVar {
+    LocalVar* next;
+    char* name;  // 変数名
+    int offset;  // RBP(ベースポインタ)からのオフセット
+};
+
 // 抽象構文木のノードの型
 typedef struct Node Node;
 struct Node {
@@ -70,13 +79,15 @@ struct Node {
     Node* next;     // 次のノード
     Node* lhs;      // 左辺 (left-hand side)
     Node* rhs;      // 右辺 (right-hand side)
-    char name;      // kindがND_LVARの場合に使う変数名
+    LocalVar* var;  // kindがND_LVARの場合に使う変数名
     int val;        // kindがND_NUMの場合のみ使う数値
 };
 
 // プログラム全体を表す型
 typedef struct {
     Node* node;
+    LocalVar* local_vars;
+    int local_var_stack_size;
 } Program;
 
 Program* program();

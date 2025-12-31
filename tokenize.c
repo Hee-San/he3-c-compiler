@@ -72,6 +72,14 @@ bool at_eof() {
     return token->kind == TK_EOF;
 }
 
+// 文字列pの長さlenの部分文字列をコピーして新しい文字列を作成して返す
+char* strndup(char* p, int len) {
+    char* buf = malloc(len + 1);
+    strncpy(buf, p, len);
+    buf[len] = '\0';
+    return buf;
+}
+
 // 新しいトークンを作成してcurに繋げる
 Token* new_token(TokenKind kind, Token* cur, char* str, int len) {
     Token* tok = calloc(1, sizeof(Token));
@@ -130,10 +138,14 @@ Token* tokenize() {
             continue;
         }
 
-        // 1文字の識別子
-        if ('a' <= *p && *p <= 'z') {
-            cur = new_token(TK_IDENT, cur, p, 1);
+        // 識別子
+        if (is_alpha(*p)) {
+            char* start = p;
             p++;
+            while (is_alnum(*p)) {
+                p++;
+            }
+            cur = new_token(TK_IDENT, cur, start, p - start);
             continue;
         }
 

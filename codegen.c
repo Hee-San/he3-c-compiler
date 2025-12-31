@@ -10,7 +10,7 @@ void gen_pop(char* register_name) {
 
 void gen_addr(Node* node) {
     if (node->kind == ND_LOCAL_VAR) {
-        int offset = (node->name - 'a' + 1) * 8;
+        int offset = node->var->offset;
         printf("  sub x0, x29, #%d\n", offset);
         gen_push("x0");
         return;
@@ -120,7 +120,7 @@ void codegen(Program* prog) {
     // 変数26個分の領域を確保する
     printf("  stp x29, x30, [sp, -16]!\n");  // フレームポインタとリターンアドレスを保存
     printf("  mov x29, sp\n");
-    printf("  sub sp, sp, #416\n");  // 26 * 16 = 416バイト
+    printf("  sub sp, sp, #%d\n", prog->local_var_stack_size);  // ローカル変数用の領域を確保
 
     // 各stmtのコードを生成
     for (Node* n = prog->node; n; n = n->next) {
