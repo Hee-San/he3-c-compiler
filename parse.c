@@ -59,17 +59,6 @@ LocalVar* push_local_var(Token* tok) {
     return var;
 }
 
-// program    = stmt*
-// stmt       = "return" expr ";" | expr ";"
-// expr       = assign
-// assign     = equality ("=" assign)?
-// equality   = relational ("==" relational | "!=" relational)*
-// relational = add ("<" add | "<=" add | ">" add | ">=" add)*
-// add        = mul ("+" mul | "-" mul)*
-// mul        = unary ("*" unary | "/" unary)*
-// unary      = ("+" | "-")? primary
-// primary    = "(" expr ")" | ident | num
-
 Node* stmt();
 Node* expr();
 Node* assign();

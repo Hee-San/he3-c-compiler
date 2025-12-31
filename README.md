@@ -33,10 +33,30 @@ cc -o tmp tmp.s
 例：
 
 ```bash
-./he3cc "1+2*3" > tmp.s
+./he3cc "return 1+2*3;" > tmp.s
 cc -o tmp tmp.s
 ./tmp
 echo $?  # 終了コードとして結果が返される
+```
+
+## 文法定義 (EBNF)
+
+```
+program    ::= stmt*
+stmt       ::= "return" expr ";" | expr ";"
+expr       ::= assign
+assign     ::= equality ("=" assign)?
+equality   ::= relational (("==" | "!=") relational)*
+relational ::= add (("<" | "<=" | ">" | ">=") add)*
+add        ::= mul (("+" | "-") mul)*
+mul        ::= unary (("*" | "/") unary)*
+unary      ::= ("+" | "-")? primary
+primary    ::= "(" expr ")" | ident | num
+
+ident      ::= letter (letter | digit)*
+num        ::= digit+
+letter     ::= [a-zA-Z_]
+digit      ::= [0-9]
 ```
 
 ## テスト
