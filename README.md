@@ -42,7 +42,8 @@ echo $?  # 終了コードとして結果が返される
 ## 文法定義 (EBNF)
 
 ```
-program    ::= stmt*
+program    ::= function*
+function   ::= ident "(" ")" "{" stmt* "}"
 stmt       ::= "return" expr ";"
              | "if" "(" expr ")" stmt ("else" stmt)?
              | "while" "(" expr ")" stmt

@@ -59,6 +59,7 @@ LocalVar* push_local_var(Token* tok) {
     return var;
 }
 
+Function* function();
 Node* stmt();
 Node* expr();
 Node* assign();
@@ -70,23 +71,46 @@ Node* unary();
 Node* primary();
 Node* func_args();
 
-// program = stmt*
+// program = function*
 Program* program() {
+    Function head;
+    head.next = NULL;
+    Function* cur = &head;
+
+    while (!at_eof()) {
+        cur->next = function();
+        cur = cur->next;
+    }
+
+    Program* prog = calloc(1, sizeof(Program));
+    prog->fns = head.next;
+    return prog;
+}
+
+// function = ident "(" ")" "{" stmt* "}"
+Function* function() {
     local_vars = NULL;
+
+    char* name = expect_ident();
+    expect("(");
+    // いったん引数なしのみ対応
+    expect(")");
+    expect("{");
 
     Node head;
     head.next = NULL;
     Node* cur = &head;
 
-    while (!at_eof()) {
+    while (!consume("}")) {
         cur->next = stmt();
         cur = cur->next;
     }
 
-    Program* prog = calloc(1, sizeof(Program));
-    prog->node = head.next;
-    prog->local_vars = local_vars;
-    return prog;
+    Function* fn = calloc(1, sizeof(Function));
+    fn->name = name;
+    fn->node = head.next;
+    fn->local_vars = local_vars;
+    return fn;
 }
 
 // stmt = "return" expr ";"

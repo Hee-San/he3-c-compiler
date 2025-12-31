@@ -3,6 +3,9 @@
 // 制御構文でジャンプするためのラベルの通し番号
 int labelseq = 0;
 
+// 現在コード生成中の関数名
+char* func_name;
+
 // 引数を格納するレジスタの名前
 char* argreg[] = {"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"};
 
@@ -82,7 +85,7 @@ void gen(Node* node) {
         case ND_RETURN:
             gen(node->lhs);
             gen_pop("x0");
-            printf("  b .Lreturn\n");
+            printf("  b .Lreturn.%s\n", func_name);
             return;
         case ND_BLOCK:
             for (Node* n = node->body; n; n = n->next) {
@@ -229,29 +232,27 @@ void gen(Node* node) {
 }
 
 void codegen(Program* prog) {
-    // アセンブリの前半部分を出力
-    printf(".globl main\n");
-    printf("main:\n");
+    printf("  .text\n");
 
-    // Prologue
-    // 変数26個分の領域を確保する
-    printf("  stp x29, x30, [sp, -16]!\n");  // フレームポインタとリターンアドレスを保存
-    printf("  mov x29, sp\n");
-    printf("  sub sp, sp, #%d\n", prog->local_var_stack_size);  // ローカル変数用の領域を確保
+    for (Function* fn = prog->fns; fn; fn = fn->next) {
+        printf(".globl %s\n", fn->name);
+        printf("%s:\n", fn->name);
+        func_name = fn->name;
 
-    // 各stmtのコードを生成
-    for (Node* n = prog->node; n; n = n->next) {
-        gen(n);
+        // Prologue
+        printf("  stp x29, x30, [sp, -16]!\n");
+        printf("  mov x29, sp\n");
+        printf("  sub sp, sp, #%d\n", fn->local_var_stack_size);
+
+        // 各stmtのコードを生成
+        for (Node* n = fn->node; n; n = n->next) {
+            gen(n);
+        }
+
+        // Epilogue
+        printf(".Lreturn.%s:\n", func_name);
+        printf("  mov sp, x29\n");
+        printf("  ldp x29, x30, [sp], #16\n");
+        printf("  ret\n");
     }
-
-    // returnステートメントがない場合は0を返す
-    // (C99以降の仕様: main関数はreturnなしで終了すると暗黙的に0を返す)
-    // TODO: 将来、一般的な関数を実装する際は、main関数のみこの処理を行うようにする
-    printf("  mov x0, #0\n");
-
-    // Epilogue
-    printf("  .Lreturn:\n");
-    printf("  mov sp, x29\n");
-    printf("  ldp x29, x30, [sp], #16\n");
-    printf("  ret\n");
 }

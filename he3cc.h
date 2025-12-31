@@ -32,6 +32,7 @@ void error_at(char* loc, char* fmt, ...);
 bool consume(char* op);
 void expect(char* op);
 int expect_number();
+char* expect_ident();
 bool at_eof();
 char* strndup(char* p, int len);
 Token* consume_ident();
@@ -101,11 +102,19 @@ struct Node {
     Node* body;  // kindがND_BLOCKの場合に使う文のリスト
 };
 
-// プログラム全体を表す型
-typedef struct {
+// 関数を表す型
+typedef struct Function Function;
+struct Function {
+    Function* next;
+    char* name;
     Node* node;
     LocalVar* local_vars;
     int local_var_stack_size;
+};
+
+// プログラム全体を表す型
+typedef struct {
+    Function* fns;
 } Program;
 
 Program* program();
