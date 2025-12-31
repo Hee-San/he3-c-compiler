@@ -9,6 +9,8 @@ char* func_name;
 // 引数を格納するレジスタの名前
 char* argreg[] = {"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"};
 
+void gen(Node* node);
+
 void gen_push(char* register_name) {
     printf("  str %s, [sp, -16]!\n", register_name);  // sp -= 16; *sp = x0;
 }
@@ -18,11 +20,15 @@ void gen_pop(char* register_name) {
 }
 
 void gen_addr(Node* node) {
-    if (node->kind == ND_LOCAL_VAR) {
-        int offset = node->var->offset;
-        printf("  sub x0, x29, #%d\n", offset);
-        gen_push("x0");
-        return;
+    switch (node->kind) {
+        case ND_LOCAL_VAR:
+            int offset = node->var->offset;
+            printf("  sub x0, x29, #%d\n", offset);
+            gen_push("x0");
+            return;
+        case ND_DEREF:
+            gen(node->lhs);
+            return;
     }
 
     error_tok(node->tok, "代入の左辺値が変数ではありません");
@@ -91,6 +97,13 @@ void gen(Node* node) {
             for (Node* n = node->body; n; n = n->next) {
                 gen(n);
             }
+            return;
+        case ND_ADDR:
+            gen_addr(node->lhs);
+            return;
+        case ND_DEREF:
+            gen(node->lhs);
+            load();
             return;
         case ND_IF: {
             int seq = labelseq++;

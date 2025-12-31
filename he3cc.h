@@ -60,6 +60,8 @@ typedef enum {
     ND_GT,         // >
     ND_GE,         // >=
     ND_ASSIGN,     // =
+    ND_ADDR,       // & アドレス演算子
+    ND_DEREF,      // * 間接参照演算子
     ND_RETURN,     // "return"
     ND_IF,         // "if"
     ND_WHILE,      // "while"

@@ -56,7 +56,7 @@ equality    ::= relational (("==" | "!=") relational)*
 relational  ::= add (("<" | "<=" | ">" | ">=") add)*
 add         ::= mul (("+" | "-") mul)*
 mul         ::= unary (("*" | "/") unary)*
-unary       ::= ("+" | "-")? primary
+unary       ::= ("+" | "-" | "*" | "&")? unary | primary
 primary     ::= "(" expr ")" | ident func-args? | num
 
 func-params ::= ident ("," ident)*

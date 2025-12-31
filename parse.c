@@ -271,13 +271,17 @@ Node* mul() {
     }
 }
 
-// unary = ("+" | "-")? primary
+// unary = ("+" | "-" | "*" | "&")? unary | primary
 Node* unary() {
     Token* tok;
     if (tok = consume("+"))
-        return primary();
+        return unary();
     if (tok = consume("-"))
-        return new_node_binary_op(ND_SUB, new_node_num(0, tok), primary(), tok);
+        return new_node_binary_op(ND_SUB, new_node_num(0, tok), unary(), tok);
+    if (tok = consume("*"))
+        return new_node_unary_op(ND_DEREF, unary(), tok);
+    if (tok = consume("&"))
+        return new_node_unary_op(ND_ADDR, primary(), tok);
     return primary();
 }
 
