@@ -15,37 +15,38 @@ Var* find_local_var(Token* tok) {
 }
 
 // 新しいノードを生成する関数
-Node* new_node(NodeKind kind) {
+Node* new_node(NodeKind kind, Token* tok) {
     Node* node = calloc(1, sizeof(Node));
     node->kind = kind;
+    node->tok = tok;
     return node;
 }
 
 // 二項演算子ノードを生成する関数
-Node* new_node_binary_op(NodeKind kind, Node* lhs, Node* rhs) {
-    Node* node = new_node(kind);
+Node* new_node_binary_op(NodeKind kind, Node* lhs, Node* rhs, Token* tok) {
+    Node* node = new_node(kind, tok);
     node->lhs = lhs;
     node->rhs = rhs;
     return node;
 }
 
 // 単項演算子ノードを生成する関数
-Node* new_node_unary_op(NodeKind kind, Node* operand) {
-    Node* node = new_node(kind);
+Node* new_node_unary_op(NodeKind kind, Node* operand, Token* tok) {
+    Node* node = new_node(kind, tok);
     node->lhs = operand;
     return node;
 }
 
 // 数値ノードを生成する関数
-Node* new_node_num(int val) {
-    Node* node = new_node(ND_NUM);
+Node* new_node_num(int val, Token* tok) {
+    Node* node = new_node(ND_NUM, tok);
     node->val = val;
     return node;
 }
 
 // ローカル変数ノードを生成する関数
-Node* new_local_var(Var* var) {
-    Node* node = new_node(ND_LOCAL_VAR);
+Node* new_local_var(Var* var, Token* tok) {
+    Node* node = new_node(ND_LOCAL_VAR, tok);
     node->var = var;
     return node;
 }
@@ -124,14 +125,15 @@ Function* function() {
 //      | "{" stmt* "}"
 //      | expr ";"
 Node* stmt() {
-    if (consume("return")) {
-        Node* node = new_node_unary_op(ND_RETURN, expr());
+    Token* tok;
+    if (tok = consume("return")) {
+        Node* node = new_node_unary_op(ND_RETURN, expr(), tok);
         expect(";");
         return node;
     }
 
-    if (consume("if")) {
-        Node* node = new_node(ND_IF);
+    if (tok = consume("if")) {
+        Node* node = new_node(ND_IF, tok);
         expect("(");
         node->cond = expr();
         expect(")");
@@ -142,8 +144,8 @@ Node* stmt() {
         return node;
     }
 
-    if (consume("while")) {
-        Node* node = new_node(ND_WHILE);
+    if (tok = consume("while")) {
+        Node* node = new_node(ND_WHILE, tok);
         expect("(");
         node->cond = expr();
         expect(")");
@@ -151,8 +153,8 @@ Node* stmt() {
         return node;
     }
 
-    if (consume("for")) {
-        Node* node = new_node(ND_FOR);
+    if (tok = consume("for")) {
+        Node* node = new_node(ND_FOR, tok);
         expect("(");
         if (!consume(";")) {
             node->init = expr();
@@ -170,8 +172,8 @@ Node* stmt() {
         return node;
     }
 
-    if (consume("{")) {
-        Node* node = new_node(ND_BLOCK);
+    if (tok = consume("{")) {
+        Node* node = new_node(ND_BLOCK, tok);
         Node head;
         head.next = NULL;
         Node* cur = &head;
@@ -185,7 +187,8 @@ Node* stmt() {
         return node;
     }
 
-    Node* node = new_node_unary_op(ND_EXPR_STMT, expr());
+    tok = token;
+    Node* node = new_node_unary_op(ND_EXPR_STMT, expr(), tok);
     expect(";");
     return node;
 }
@@ -198,20 +201,22 @@ Node* expr() {
 // assign = equality ("=" assign)?
 Node* assign() {
     Node* node = equality();
-    if (consume("="))
-        node = new_node_binary_op(ND_ASSIGN, node, assign());
+    Token* tok;
+    if (tok = consume("="))
+        node = new_node_binary_op(ND_ASSIGN, node, assign(), tok);
     return node;
 }
 
 // equality = relational ("==" relational | "!=" relational)*
 Node* equality() {
     Node* node = relational();
+    Token* tok;
 
     for (;;) {
-        if (consume("=="))
-            node = new_node_binary_op(ND_EQ, node, relational());
-        else if (consume("!="))
-            node = new_node_binary_op(ND_NE, node, relational());
+        if (tok = consume("=="))
+            node = new_node_binary_op(ND_EQ, node, relational(), tok);
+        else if (tok = consume("!="))
+            node = new_node_binary_op(ND_NE, node, relational(), tok);
         else
             return node;
     }
@@ -220,16 +225,17 @@ Node* equality() {
 // relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 Node* relational() {
     Node* node = add();
+    Token* tok;
 
     for (;;) {
-        if (consume("<"))
-            node = new_node_binary_op(ND_LT, node, add());
-        else if (consume("<="))
-            node = new_node_binary_op(ND_LE, node, add());
-        else if (consume(">"))
-            node = new_node_binary_op(ND_GT, node, add());
-        else if (consume(">="))
-            node = new_node_binary_op(ND_GE, node, add());
+        if (tok = consume("<"))
+            node = new_node_binary_op(ND_LT, node, add(), tok);
+        else if (tok = consume("<="))
+            node = new_node_binary_op(ND_LE, node, add(), tok);
+        else if (tok = consume(">"))
+            node = new_node_binary_op(ND_GT, node, add(), tok);
+        else if (tok = consume(">="))
+            node = new_node_binary_op(ND_GE, node, add(), tok);
         else
             return node;
     }
@@ -238,12 +244,13 @@ Node* relational() {
 // add = mul ("+" mul | "-" mul)*
 Node* add() {
     Node* node = mul();
+    Token* tok;
 
     for (;;) {
-        if (consume("+"))
-            node = new_node_binary_op(ND_ADD, node, mul());
-        else if (consume("-"))
-            node = new_node_binary_op(ND_SUB, node, mul());
+        if (tok = consume("+"))
+            node = new_node_binary_op(ND_ADD, node, mul(), tok);
+        else if (tok = consume("-"))
+            node = new_node_binary_op(ND_SUB, node, mul(), tok);
         else
             return node;
     }
@@ -252,12 +259,13 @@ Node* add() {
 // mul = unary ("*" unary | "/" unary)*
 Node* mul() {
     Node* node = unary();
+    Token* tok;
 
     for (;;) {
-        if (consume("*"))
-            node = new_node_binary_op(ND_MUL, node, unary());
-        else if (consume("/"))
-            node = new_node_binary_op(ND_DIV, node, unary());
+        if (tok = consume("*"))
+            node = new_node_binary_op(ND_MUL, node, unary(), tok);
+        else if (tok = consume("/"))
+            node = new_node_binary_op(ND_DIV, node, unary(), tok);
         else
             return node;
     }
@@ -265,10 +273,11 @@ Node* mul() {
 
 // unary = ("+" | "-")? primary
 Node* unary() {
-    if (consume("+"))
+    Token* tok;
+    if (tok = consume("+"))
         return primary();
-    if (consume("-"))
-        return new_node_binary_op(ND_SUB, new_node_num(0), primary());
+    if (tok = consume("-"))
+        return new_node_binary_op(ND_SUB, new_node_num(0, tok), primary(), tok);
     return primary();
 }
 
@@ -280,10 +289,10 @@ Node* primary() {
         return node;
     }
 
-    Token* tok = consume_ident();
-    if (tok) {
+    Token* tok;
+    if (tok = consume_ident()) {
         if (consume("(")) {
-            Node* node = new_node(ND_FUN_CALL);
+            Node* node = new_node(ND_FUN_CALL, tok);
             node->func_name = strndup(tok->str, tok->len);
             node->args = func_args();
             return node;
@@ -293,10 +302,14 @@ Node* primary() {
         if (!var) {
             var = push_local_var(tok);
         }
-        return new_local_var(var);
+        return new_local_var(var, tok);
     }
 
-    return new_node_num(expect_number());
+    tok = token;
+    if (tok->kind != TK_NUM)
+        error_tok(tok, "式が必要です");
+
+    return new_node_num(expect_number(), tok);
 }
 
 // func-params = ident ("," ident)*

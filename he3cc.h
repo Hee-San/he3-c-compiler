@@ -29,7 +29,8 @@ struct Token {
 
 void error(char* fmt, ...);
 void error_at(char* loc, char* fmt, ...);
-bool consume(char* op);
+void error_tok(Token* tok, char* fmt, ...);
+Token* consume(char* op);
 void expect(char* op);
 int expect_number();
 char* expect_ident();
@@ -88,10 +89,12 @@ typedef struct Node Node;
 struct Node {
     NodeKind kind;  // ノードの型
     Node* next;     // 次のノード
-    Node* lhs;      // 左辺 (left-hand side)
-    Node* rhs;      // 右辺 (right-hand side)
-    Var* var;       // kindがND_LOCAL_VARの場合に使う変数名
-    int val;        // kindがND_NUMの場合のみ使う数値
+    Token* tok;     // ノードに対応するトークン
+
+    Node* lhs;  // 左辺 (left-hand side)
+    Node* rhs;  // 右辺 (right-hand side)
+    Var* var;   // kindがND_LOCAL_VARの場合に使う変数名
+    int val;    // kindがND_NUMの場合のみ使う数値
 
     // kindがND_IF, ND_WHILE, ND_FORの場合に使う
     Node* cond;  // 条件式

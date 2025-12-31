@@ -16,10 +16,7 @@ void error(char* fmt, ...) {
 }
 
 // エラー箇所を報告する
-void error_at(char* loc, char* fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-
+void verror_at(char* loc, char* fmt, va_list ap) {
     int pos = loc - user_input;
     fprintf(stderr, "%s\n", user_input);
     fprintf(stderr, "%*s", pos, "");  // pos個の空白を出力
@@ -29,15 +26,37 @@ void error_at(char* loc, char* fmt, ...) {
     exit(1);
 }
 
+// エラー箇所を報告する
+void error_at(char* loc, char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    verror_at(loc, fmt, ap);
+}
+
+// エラー箇所を報告する
+void error_tok(Token* tok, char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    if (tok) {
+        verror_at(tok->str, fmt, ap);
+    }
+
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
+}
+
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
-bool consume(char* op) {
+Token* consume(char* op) {
     if (token->kind != TK_RESERVED ||
         strlen(op) != token->len ||
         strncmp(token->str, op, token->len) != 0)
-        return false;
+        return NULL;
+
+    Token* t = token;
     token = token->next;
-    return true;
+    return t;
 }
 
 Token* consume_ident() {
@@ -54,7 +73,7 @@ void expect(char* op) {
     if (token->kind != TK_RESERVED ||
         strlen(op) != token->len ||
         strncmp(token->str, op, token->len) != 0)
-        error_at(token->str, "'%s'ではありません", op);
+        error_tok(token, "'%s'が必要です", op);
     token = token->next;
 }
 
@@ -62,7 +81,7 @@ void expect(char* op) {
 // それ以外の場合にはエラーを報告する。
 int expect_number() {
     if (token->kind != TK_NUM)
-        error_at(token->str, "数ではありません");
+        error_tok(token, "数が必要です");
     int val = token->val;
     token = token->next;
     return val;
@@ -72,7 +91,7 @@ int expect_number() {
 // それ以外の場合にはエラーを報告する。
 char* expect_ident() {
     if (token->kind != TK_IDENT)
-        error_at(token->str, "識別子ではありません");
+        error_tok(token, "識別子が必要です");
     char* s = strndup(token->str, token->len);
     token = token->next;
     return s;
