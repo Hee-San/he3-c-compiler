@@ -42,28 +42,29 @@ echo $?  # 終了コードとして結果が返される
 ## 文法定義 (EBNF)
 
 ```
-program    ::= function*
-function   ::= ident "(" ")" "{" stmt* "}"
-stmt       ::= "return" expr ";"
-             | "if" "(" expr ")" stmt ("else" stmt)?
-             | "while" "(" expr ")" stmt
-             | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-             | "{" stmt* "}"
-             | expr ";"
-expr       ::= assign
-assign     ::= equality ("=" assign)?
-equality   ::= relational (("==" | "!=") relational)*
-relational ::= add (("<" | "<=" | ">" | ">=") add)*
-add        ::= mul (("+" | "-") mul)*
-mul        ::= unary (("*" | "/") unary)*
-unary      ::= ("+" | "-")? primary
-primary    ::= "(" expr ")" | ident func-args? | num
+program     ::= function*
+function    ::= ident "(" func-params? ")" "{" stmt* "}"
+stmt        ::= "return" expr ";"
+              | "if" "(" expr ")" stmt ("else" stmt)?
+              | "while" "(" expr ")" stmt
+              | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+              | "{" stmt* "}"
+              | expr ";"
+expr        ::= assign
+assign      ::= equality ("=" assign)?
+equality    ::= relational (("==" | "!=") relational)*
+relational  ::= add (("<" | "<=" | ">" | ">=") add)*
+add         ::= mul (("+" | "-") mul)*
+mul         ::= unary (("*" | "/") unary)*
+unary       ::= ("+" | "-")? primary
+primary     ::= "(" expr ")" | ident func-args? | num
 
-ident      ::= letter (letter | digit)*
-func-args  ::= "(" (assign ("," assign)*)? ")"
-num        ::= digit+
-letter     ::= [a-zA-Z_]
-digit      ::= [0-9]
+func-params ::= ident ("," ident)*
+ident       ::= letter (letter | digit)*
+func-args   ::= "(" (assign ("," assign)*)? ")"
+num         ::= digit+
+letter      ::= [a-zA-Z_]
+digit       ::= [0-9]
 ```
 
 ## テスト

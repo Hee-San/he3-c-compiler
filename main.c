@@ -16,9 +16,9 @@ int main(int argc, char** argv) {
     for (Function* fn = prog->fns; fn; fn = fn->next) {
         // ローカル変数のオフセットを決定する
         int offset = 0;
-        for (Var* var = fn->local_vars; var; var = var->next) {
+        for (VarList* var_list = fn->local_vars; var_list; var_list = var_list->next) {
             offset += 16;
-            var->offset = offset;
+            var_list->var->offset = offset;
         }
         fn->local_var_stack_size = offset;
     }

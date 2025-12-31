@@ -73,9 +73,14 @@ typedef enum {
 // 変数を表す型
 typedef struct Var Var;
 struct Var {
-    Var* next;
     char* name;  // 変数名
     int offset;  // RBP(ベースポインタ)からのオフセット
+};
+
+typedef struct VarList VarList;
+struct VarList {
+    VarList* next;
+    Var* var;
 };
 
 // 抽象構文木のノードの型
@@ -107,8 +112,10 @@ typedef struct Function Function;
 struct Function {
     Function* next;
     char* name;
+    VarList* params;
+
     Node* node;
-    Var* local_vars;
+    VarList* local_vars;
     int local_var_stack_size;
 };
 

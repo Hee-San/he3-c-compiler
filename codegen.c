@@ -244,6 +244,14 @@ void codegen(Program* prog) {
         printf("  mov x29, sp\n");
         printf("  sub sp, sp, #%d\n", fn->local_var_stack_size);
 
+        // 引数をスタックに保存
+        int i = 0;
+        for (VarList* var_list = fn->params; var_list; var_list = var_list->next) {
+            // 引数はすでにレジスタに入っているので、それをスタックに保存する
+            Var* var = var_list->var;
+            printf("  str %s, [x29, #-%d]\n", argreg[i++], var->offset);
+        }
+
         // 各stmtのコードを生成
         for (Node* n = fn->node; n; n = n->next) {
             gen(n);

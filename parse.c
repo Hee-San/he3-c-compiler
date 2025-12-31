@@ -1,10 +1,11 @@
 #include "he3cc.h"
 
-Var* local_vars;
+VarList* local_vars;
 
 // 既存のローカル変数を名前で検索する関数
 Var* find_local_var(Token* tok) {
-    for (Var* var = local_vars; var; var = var->next) {
+    for (VarList* var_list = local_vars; var_list; var_list = var_list->next) {
+        Var* var = var_list->var;
         if (tok->len == strlen(var->name) &&
             strncmp(tok->str, var->name, tok->len) == 0) {
             return var;
@@ -52,10 +53,14 @@ Node* new_local_var(Var* var) {
 // 新しいローカル変数をローカル変数リストに追加する関数
 Var* push_local_var(Token* tok) {
     Var* var = calloc(1, sizeof(Var));
-    var->next = local_vars;
     var->name = strndup(tok->str, tok->len);
+
+    VarList* var_list = calloc(1, sizeof(VarList));
+    var_list->var = var;
+    var_list->next = local_vars;
+
     // オフセットの割り当てはパーサーの役割ではないので、ここでは行わない
-    local_vars = var;
+    local_vars = var_list;
     return var;
 }
 
@@ -70,6 +75,7 @@ Node* mul();
 Node* unary();
 Node* primary();
 Node* func_args();
+VarList* func_params();
 
 // program = function*
 Program* program() {
@@ -87,14 +93,14 @@ Program* program() {
     return prog;
 }
 
-// function = ident "(" ")" "{" stmt* "}"
+// function = ident "(" func_params? ")" "{" stmt* "}"
 Function* function() {
     local_vars = NULL;
 
-    char* name = expect_ident();
+    Function* fn = calloc(1, sizeof(Function));
+    fn->name = expect_ident();
     expect("(");
-    // いったん引数なしのみ対応
-    expect(")");
+    fn->params = func_params();
     expect("{");
 
     Node head;
@@ -106,8 +112,6 @@ Function* function() {
         cur = cur->next;
     }
 
-    Function* fn = calloc(1, sizeof(Function));
-    fn->name = name;
     fn->node = head.next;
     fn->local_vars = local_vars;
     return fn;
@@ -293,6 +297,26 @@ Node* primary() {
     }
 
     return new_node_num(expect_number());
+}
+
+// func-params = ident ("," ident)*
+VarList* func_params() {
+    if (consume(")")) {
+        return NULL;
+    }
+
+    VarList* head = calloc(1, sizeof(VarList));
+    head->var = push_local_var(consume_ident());
+    VarList* cur = head;
+
+    while (!consume(")")) {
+        expect(",");
+        cur->next = calloc(1, sizeof(VarList));
+        cur->next->var = push_local_var(consume_ident());
+        cur = cur->next;
+    }
+
+    return head;
 }
 
 // func-args = "(" (assign ("," assign)*)? ")"
