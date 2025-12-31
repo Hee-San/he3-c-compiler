@@ -56,10 +56,10 @@ relational ::= add (("<" | "<=" | ">" | ">=") add)*
 add        ::= mul (("+" | "-") mul)*
 mul        ::= unary (("*" | "/") unary)*
 unary      ::= ("+" | "-")? primary
-primary    ::= "(" expr ")" | ident args? | num
+primary    ::= "(" expr ")" | ident func-args? | num
 
 ident      ::= letter (letter | digit)*
-args       ::= "(" ")"
+func-args  ::= "(" (assign ("," assign)*)? ")"
 num        ::= digit+
 letter     ::= [a-zA-Z_]
 digit      ::= [0-9]

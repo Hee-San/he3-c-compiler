@@ -68,6 +68,7 @@ Node* add();
 Node* mul();
 Node* unary();
 Node* primary();
+Node* func_args();
 
 // program = stmt*
 Program* program() {
@@ -243,8 +244,7 @@ Node* unary() {
     return primary();
 }
 
-// primary = "(" expr ")" | ident args? | num
-// args    = "(" ")"
+// primary = "(" expr ")" | ident func-args? | num
 Node* primary() {
     if (consume("(")) {
         Node* node = expr();
@@ -255,9 +255,9 @@ Node* primary() {
     Token* tok = consume_ident();
     if (tok) {
         if (consume("(")) {
-            expect(")");
             Node* node = new_node(ND_FUN_CALL);
             node->func_name = strndup(tok->str, tok->len);
+            node->args = func_args();
             return node;
         }
 
@@ -269,4 +269,20 @@ Node* primary() {
     }
 
     return new_node_num(expect_number());
+}
+
+// func-args = "(" (assign ("," assign)*)? ")"
+Node* func_args() {
+    if (consume(")")) {
+        return NULL;
+    }
+
+    Node* head = assign();
+    Node* cur = head;
+    while (consume(",")) {
+        cur->next = assign();
+        cur = cur->next;
+    }
+    expect(")");
+    return head;
 }

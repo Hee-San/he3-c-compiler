@@ -3,6 +3,9 @@
 // 制御構文でジャンプするためのラベルの通し番号
 int labelseq = 0;
 
+// 引数を格納するレジスタの名前
+char* argreg[] = {"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"};
+
 void gen_push(char* register_name) {
     printf("  str %s, [sp, -16]!\n", register_name);  // sp -= 16; *sp = x0;
 }
@@ -58,8 +61,22 @@ void gen(Node* node) {
             store();
             return;
         case ND_FUN_CALL:
-            // 現状、引数なし関数のみ対応
+            // 現状、引数は8個まで対応
+            int num_args = 0;
+            for (Node* arg = node->args; arg; arg = arg->next) {
+                gen(arg);
+                num_args++;
+            }
+
+            // スタックから逆順でポップして引数レジスタにセット
+            for (int i = num_args - 1; i >= 0; i--) {
+                gen_pop(argreg[i]);
+            }
+
+            // 関数呼び出し
             printf("  bl %s\n", node->func_name);
+
+            // 戻り値をスタックにプッシュ
             gen_push("x0");
             return;
         case ND_RETURN:

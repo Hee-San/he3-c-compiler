@@ -94,8 +94,11 @@ struct Node {
     Node* init;  // 初期化文 (for文用)
     Node* inc;   // 増分文 (for文用)
 
-    Node* body;       // kindがND_BLOCKの場合に使う文のリスト
-    char* func_name;  // kindがND_FUN_CALLの場合に使う関数名
+    // kindがND_FUN_CALLの場合に使う
+    char* func_name;  // 関数名
+    Node* args;       // 引数リスト
+
+    Node* body;  // kindがND_BLOCKの場合に使う文のリスト
 };
 
 // プログラム全体を表す型
