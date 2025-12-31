@@ -67,9 +67,6 @@ void gen(Node* node) {
     gen_pop("x0");
 
     switch (node->kind) {
-        case ND_NUM:
-            // ND_NUMは上で処理済みなのでここには来ない
-            break;
         case ND_ADD:
             printf("  add x0, x0, x1\n");
             break;
