@@ -111,7 +111,7 @@ void gen(Node* node) {
     gen_push("x0");
 }
 
-void codegen(Node* program) {
+void codegen(Program* prog) {
     // アセンブリの前半部分を出力
     printf(".globl main\n");
     printf("main:\n");
@@ -123,7 +123,7 @@ void codegen(Node* program) {
     printf("  sub sp, sp, #416\n");  // 26 * 16 = 416バイト
 
     // 各stmtのコードを生成
-    for (Node* n = program; n; n = n->next) {
+    for (Node* n = prog->node; n; n = n->next) {
         gen(n);
     }
 

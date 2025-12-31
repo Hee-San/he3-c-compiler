@@ -74,10 +74,15 @@ struct Node {
     int val;        // kindがND_NUMの場合のみ使う数値
 };
 
-Node* program();
+// プログラム全体を表す型
+typedef struct {
+    Node* node;
+} Program;
+
+Program* program();
 
 //
 // codegen.c
 //
 
-void codegen(Node* program);
+void codegen(Program* prog);

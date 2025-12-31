@@ -57,7 +57,7 @@ Node* unary();
 Node* primary();
 
 // program = stmt*
-Node* program() {
+Program* program() {
     Node head;
     head.next = NULL;
     Node* cur = &head;
@@ -67,7 +67,9 @@ Node* program() {
         cur = cur->next;
     }
 
-    return head.next;
+    Program* prog = calloc(1, sizeof(Program));
+    prog->node = head.next;
+    return prog;
 }
 
 // stmt = "return" expr ";" | expr ";"

@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
     token = tokenize();
 
     // パースする
-    Node* prog = program();
+    Program* prog = program();
 
     // コード生成する
     codegen(prog);
