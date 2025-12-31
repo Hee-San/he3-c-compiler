@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct Type Type;
+
 //
 // tokenize.c
 //
@@ -91,6 +93,7 @@ typedef struct Node Node;
 struct Node {
     NodeKind kind;  // ノードの型
     Node* next;     // 次のノード
+    Type* ty;       // ノードの型情報 (現状はintまたはintへのポインタのみ)
     Token* tok;     // ノードに対応するトークン
 
     Node* lhs;  // 左辺 (left-hand side)
@@ -130,6 +133,22 @@ typedef struct {
 } Program;
 
 Program* program();
+
+//
+// type.c
+//
+
+typedef enum {
+    TY_INT,
+    TY_PTR,
+} TypeKind;
+
+struct Type {
+    TypeKind kind;
+    Type* base;  // ポインタ型の場合、指している型
+};
+
+void add_type(Program* prog);
 
 //
 // codegen.c

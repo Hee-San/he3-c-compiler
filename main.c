@@ -13,6 +13,9 @@ int main(int argc, char** argv) {
     // パースする
     Program* prog = program();
 
+    // 型を付ける
+    add_type(prog);
+
     for (Function* fn = prog->fns; fn; fn = fn->next) {
         // ローカル変数のオフセットを決定する
         int offset = 0;

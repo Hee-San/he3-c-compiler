@@ -204,9 +204,19 @@ void gen(Node* node) {
 
     switch (node->kind) {
         case ND_ADD:
+            if (node->ty->kind == TY_PTR) {
+                // ポインタ型の場合、スケーリングする
+                printf("  mov x2, #%d\n", 16);  // int型のサイズは16バイト
+                printf("  mul x1, x1, x2\n");
+            }
             printf("  add x0, x0, x1\n");
             break;
         case ND_SUB:
+            if (node->ty->kind == TY_PTR) {
+                // ポインタ型の場合、スケーリングする
+                printf("  mov x2, #%d\n", 16);  // int型のサイズは16バイト
+                printf("  mul x1, x1, x2\n");
+            }
             printf("  sub x0, x0, x1\n");
             break;
         case ND_MUL:
