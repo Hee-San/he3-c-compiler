@@ -62,6 +62,11 @@ void gen(Node* node) {
             gen_pop("x0");
             printf("  b .Lreturn\n");
             return;
+        case ND_BLOCK:
+            for (Node* n = node->body; n; n = n->next) {
+                gen(n);
+            }
+            return;
         case ND_IF: {
             int seq = labelseq++;
 

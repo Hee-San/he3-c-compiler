@@ -92,6 +92,7 @@ Program* program() {
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+//      | "{" stmt* "}"
 //      | expr ";"
 Node* stmt() {
     if (consume("return")) {
@@ -121,7 +122,7 @@ Node* stmt() {
         return node;
     }
 
-    if(consume("for")) {
+    if (consume("for")) {
         Node* node = new_node(ND_FOR);
         expect("(");
         if (!consume(";")) {
@@ -137,6 +138,21 @@ Node* stmt() {
             expect(")");
         }
         node->then = stmt();
+        return node;
+    }
+
+    if (consume("{")) {
+        Node* node = new_node(ND_BLOCK);
+        Node head;
+        head.next = NULL;
+        Node* cur = &head;
+
+        while (!consume("}")) {
+            cur->next = stmt();
+            cur = cur->next;
+        }
+
+        node->body = head.next;
         return node;
     }
 

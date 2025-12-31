@@ -62,7 +62,10 @@ assert 5 'if (0) a=3; else a=5; return a;'
 assert 3 'if (1) a=3; else a=5; return a;'
 assert 7 'if (0) return 3; else if (0) return 5; else return 7;'
 
+assert 3 '{1; {2;} return 3;}'
+
 assert 10 'i=0; while(i<10) i=i+1; return i;'
+assert 55 'i=0; j=0; while(i<=10) {j=i+j; i=i+1;} return j;'
 
 assert 55 'i=0; j=0; for (i=0; i<=10; i=i+1) j=i+j; return j;'
 assert 3 'for (;;) return 3; return 5;'

@@ -62,6 +62,7 @@ typedef enum {
     ND_IF,         // "if"
     ND_WHILE,      // "while"
     ND_FOR,        // "for"
+    ND_BLOCK,      // ブロック { ... }
     ND_EXPR_STMT,  // 式文
     ND_LOCAL_VAR,  // ローカル変数
     ND_NUM,        // 整数
@@ -91,6 +92,8 @@ struct Node {
     Node* els;   // else節
     Node* init;  // 初期化文 (for文用)
     Node* inc;   // 増分文 (for文用)
+
+    Node* body;  // kindがND_BLOCKの場合に使う文のリスト
 };
 
 // プログラム全体を表す型
