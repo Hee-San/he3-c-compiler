@@ -243,7 +243,8 @@ Node* unary() {
     return primary();
 }
 
-// primary = "(" expr ")" | ident | num
+// primary = "(" expr ")" | ident args? | num
+// args    = "(" ")"
 Node* primary() {
     if (consume("(")) {
         Node* node = expr();
@@ -253,6 +254,13 @@ Node* primary() {
 
     Token* tok = consume_ident();
     if (tok) {
+        if (consume("(")) {
+            expect(")");
+            Node* node = new_node(ND_FUN_CALL);
+            node->func_name = strndup(tok->str, tok->len);
+            return node;
+        }
+
         LocalVar* var = find_local_var(tok);
         if (!var) {
             var = push_local_var(tok);

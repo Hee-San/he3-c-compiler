@@ -57,6 +57,11 @@ void gen(Node* node) {
             gen(node->rhs);
             store();
             return;
+        case ND_FUN_CALL:
+            // 現状、引数なし関数のみ対応
+            printf("  bl %s\n", node->func_name);
+            gen_push("x0");
+            return;
         case ND_RETURN:
             gen(node->lhs);
             gen_pop("x0");

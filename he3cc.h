@@ -63,6 +63,7 @@ typedef enum {
     ND_WHILE,      // "while"
     ND_FOR,        // "for"
     ND_BLOCK,      // ブロック { ... }
+    ND_FUN_CALL,   // 関数呼び出し
     ND_EXPR_STMT,  // 式文
     ND_LOCAL_VAR,  // ローカル変数
     ND_NUM,        // 整数
@@ -93,7 +94,8 @@ struct Node {
     Node* init;  // 初期化文 (for文用)
     Node* inc;   // 増分文 (for文用)
 
-    Node* body;  // kindがND_BLOCKの場合に使う文のリスト
+    Node* body;       // kindがND_BLOCKの場合に使う文のリスト
+    char* func_name;  // kindがND_FUN_CALLの場合に使う関数名
 };
 
 // プログラム全体を表す型
