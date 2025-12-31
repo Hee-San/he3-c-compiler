@@ -102,6 +102,43 @@ bool is_alnum(char c) {
     return is_alpha(c) || ('0' <= c && c <= '9');
 }
 
+// 予約語をマッチングして新しいトークンを返す。マッチしなければNULLを返す
+Token* try_keyword(Token* cur, char** p) {
+    static char* keywords[] = {
+        "return",
+        "if",
+        "else",
+    };
+    for (int i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
+        int len = strlen(keywords[i]);
+        if (startswith(*p, keywords[i]) && !is_alnum((*p)[len])) {
+            Token* tok = new_token(TK_RESERVED, cur, *p, len);
+            *p += len;
+            return tok;
+        }
+    }
+    return NULL;
+}
+
+// 2文字の演算子をマッチングして新しいトークンを返す。マッチしなければNULLを返す
+Token* try_multi_char_op(Token* cur, char** p) {
+    static char* multi_char_ops[] = {
+        "==",
+        "!=",
+        "<=",
+        ">=",
+    };
+    for (int i = 0; i < sizeof(multi_char_ops) / sizeof(*multi_char_ops); i++) {
+        int len = strlen(multi_char_ops[i]);
+        if (startswith(*p, multi_char_ops[i])) {
+            Token* tok = new_token(TK_RESERVED, cur, *p, len);
+            *p += len;
+            return tok;
+        }
+    }
+    return NULL;
+}
+
 // 入力文字列pをトークナイズしてそれを返す
 Token* tokenize() {
     char* p = user_input;
@@ -117,17 +154,16 @@ Token* tokenize() {
         }
 
         // 予約語
-        if (startswith(p, "return") && !is_alnum(p[6])) {
-            cur = new_token(TK_RESERVED, cur, p, 6);
-            p += 6;
+        Token* tok = try_keyword(cur, &p);
+        if (tok) {
+            cur = tok;
             continue;
         }
 
         // 2文字の記号
-        if (startswith(p, "==") || startswith(p, "!=") ||
-            startswith(p, "<=") || startswith(p, ">=")) {
-            cur = new_token(TK_RESERVED, cur, p, 2);
-            p += 2;
+        tok = try_multi_char_op(cur, &p);
+        if (tok) {
+            cur = tok;
             continue;
         }
 

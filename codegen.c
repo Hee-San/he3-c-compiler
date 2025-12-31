@@ -1,5 +1,8 @@
 #include "he3cc.h"
 
+// 制御構文でジャンプするためのラベルの通し番号
+int labelseq = 0;
+
 void gen_push(char* register_name) {
     printf("  str %s, [sp, -16]!\n", register_name);  // sp -= 16; *sp = x0;
 }
@@ -59,6 +62,36 @@ void gen(Node* node) {
             gen_pop("x0");
             printf("  b .Lreturn\n");
             return;
+        case ND_IF: {
+            int seq = labelseq++;
+
+            // 条件式
+            gen(node->cond);
+            gen_pop("x0");
+            printf("  cmp x0, #0\n");  // x0と0を比較
+
+            // 条件の結果が0(false)なら
+            if (node->els) {
+                printf("  b.eq .Lelse%d\n", seq);  // else節へジャンプ
+            } else {
+                printf("  b.eq .Lend%d\n", seq);  // end節へジャンプ
+            }
+
+            // then節
+            gen(node->then);
+            printf("  b .Lend%d\n", seq);  // end節へジャンプ
+
+            if (node->els) {
+                // else節
+                printf(".Lelse%d:\n", seq);
+                gen(node->els);
+            }
+
+            // end節
+            printf(".Lend%d:\n", seq);
+
+            return;
+        }
     }
 
     gen(node->lhs);

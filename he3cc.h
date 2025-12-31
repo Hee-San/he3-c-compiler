@@ -59,6 +59,7 @@ typedef enum {
     ND_GE,         // >=
     ND_ASSIGN,     // =
     ND_RETURN,     // "return"
+    ND_IF,         // "if"
     ND_EXPR_STMT,  // 式文
     ND_LOCAL_VAR,  // ローカル変数
     ND_NUM,        // 整数
@@ -79,8 +80,11 @@ struct Node {
     Node* next;     // 次のノード
     Node* lhs;      // 左辺 (left-hand side)
     Node* rhs;      // 右辺 (right-hand side)
-    LocalVar* var;  // kindがND_LVARの場合に使う変数名
+    LocalVar* var;  // kindがND_LOCAL_VARの場合に使う変数名
     int val;        // kindがND_NUMの場合のみ使う数値
+    Node* cond;     // kindがND_IFの場合に使う条件式
+    Node* then;     // kindがND_IFの場合に使うthen節
+    Node* els;      // kindがND_IFの場合に使うelse節
 };
 
 // プログラム全体を表す型

@@ -43,7 +43,9 @@ echo $?  # 終了コードとして結果が返される
 
 ```
 program    ::= stmt*
-stmt       ::= "return" expr ";" | expr ";"
+stmt       ::= "return" expr ";"
+             | "if" "(" expr ")" stmt ("else" stmt)?
+             | expr ";"
 expr       ::= assign
 assign     ::= equality ("=" assign)?
 equality   ::= relational (("==" | "!=") relational)*
