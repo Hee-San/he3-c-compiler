@@ -1,10 +1,10 @@
 #include "he3cc.h"
 
-LocalVar* local_vars;
+Var* local_vars;
 
 // 既存のローカル変数を名前で検索する関数
-LocalVar* find_local_var(Token* tok) {
-    for (LocalVar* var = local_vars; var; var = var->next) {
+Var* find_local_var(Token* tok) {
+    for (Var* var = local_vars; var; var = var->next) {
         if (tok->len == strlen(var->name) &&
             strncmp(tok->str, var->name, tok->len) == 0) {
             return var;
@@ -43,15 +43,15 @@ Node* new_node_num(int val) {
 }
 
 // ローカル変数ノードを生成する関数
-Node* new_local_var(LocalVar* var) {
+Node* new_local_var(Var* var) {
     Node* node = new_node(ND_LOCAL_VAR);
     node->var = var;
     return node;
 }
 
 // 新しいローカル変数をローカル変数リストに追加する関数
-LocalVar* push_local_var(Token* tok) {
-    LocalVar* var = calloc(1, sizeof(LocalVar));
+Var* push_local_var(Token* tok) {
+    Var* var = calloc(1, sizeof(Var));
     var->next = local_vars;
     var->name = strndup(tok->str, tok->len);
     // オフセットの割り当てはパーサーの役割ではないので、ここでは行わない
@@ -285,7 +285,7 @@ Node* primary() {
             return node;
         }
 
-        LocalVar* var = find_local_var(tok);
+        Var* var = find_local_var(tok);
         if (!var) {
             var = push_local_var(tok);
         }

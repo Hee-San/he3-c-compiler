@@ -70,10 +70,10 @@ typedef enum {
     ND_NUM,        // 整数
 } NodeKind;
 
-// ローカル変数を表す型
-typedef struct LocalVar LocalVar;
-struct LocalVar {
-    LocalVar* next;
+// 変数を表す型
+typedef struct Var Var;
+struct Var {
+    Var* next;
     char* name;  // 変数名
     int offset;  // RBP(ベースポインタ)からのオフセット
 };
@@ -85,7 +85,7 @@ struct Node {
     Node* next;     // 次のノード
     Node* lhs;      // 左辺 (left-hand side)
     Node* rhs;      // 右辺 (right-hand side)
-    LocalVar* var;  // kindがND_LOCAL_VARの場合に使う変数名
+    Var* var;       // kindがND_LOCAL_VARの場合に使う変数名
     int val;        // kindがND_NUMの場合のみ使う数値
 
     // kindがND_IF, ND_WHILE, ND_FORの場合に使う
@@ -108,7 +108,7 @@ struct Function {
     Function* next;
     char* name;
     Node* node;
-    LocalVar* local_vars;
+    Var* local_vars;
     int local_var_stack_size;
 };
 
