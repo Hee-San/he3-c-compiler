@@ -67,18 +67,17 @@ typedef enum {
 typedef struct Node Node;
 struct Node {
     NodeKind kind;  // ノードの型
+    Node* next;     // 次のノード
     Node* lhs;      // 左辺 (left-hand side)
     Node* rhs;      // 右辺 (right-hand side)
     char name;      // kindがND_LVARの場合に使う変数名
     int val;        // kindがND_NUMの場合のみ使う数値
 };
 
-void program();
-
-extern Node* code[100];
+Node* program();
 
 //
 // codegen.c
 //
 
-void codegen();
+void codegen(Node* program);

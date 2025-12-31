@@ -56,15 +56,18 @@ Node* mul();
 Node* unary();
 Node* primary();
 
-Node* code[100];
-
 // program = stmt*
-void program() {
-    int i = 0;
+Node* program() {
+    Node head;
+    head.next = NULL;
+    Node* cur = &head;
+
     while (!at_eof()) {
-        code[i++] = stmt();
+        cur->next = stmt();
+        cur = cur->next;
     }
-    code[i] = NULL;
+
+    return head.next;
 }
 
 // stmt = "return" expr ";" | expr ";"
