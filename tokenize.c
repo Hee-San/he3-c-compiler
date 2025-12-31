@@ -109,6 +109,7 @@ Token* try_keyword(Token* cur, char** p) {
         "if",
         "else",
         "while",
+        "for",
     };
     for (int i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
         int len = strlen(keywords[i]);

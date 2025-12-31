@@ -117,6 +117,41 @@ void gen(Node* node) {
 
             return;
         }
+        case ND_FOR: {
+            int seq = labelseq++;
+
+            // 初期化文
+            if (node->init)
+                gen(node->init);
+
+            // 繰り返しの開始ラベル
+            printf(".Lbegin%d:\n", seq);
+
+            // 条件式
+            if (node->cond) {
+                gen(node->cond);
+                gen_pop("x0");
+                printf("  cmp x0, #0\n");  // x0と0を比較
+
+                // 条件の結果が0(false)なら繰り返し終了
+                printf("  b.eq .Lend%d\n", seq);
+            }
+
+            // 繰り返し本体
+            gen(node->then);
+
+            // 増分文
+            if (node->inc)
+                gen(node->inc);
+
+            // 繰り返しの先頭に戻る
+            printf("  b .Lbegin%d\n", seq);
+
+            // 繰り返しの終了ラベル
+            printf(".Lend%d:\n", seq);
+
+            return;
+        }
     }
 
     gen(node->lhs);

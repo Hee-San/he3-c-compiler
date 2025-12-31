@@ -46,6 +46,7 @@ program    ::= stmt*
 stmt       ::= "return" expr ";"
              | "if" "(" expr ")" stmt ("else" stmt)?
              | "while" "(" expr ")" stmt
+             | "for" "(" expr? ";" expr? ";" expr? ")" stmt
              | expr ";"
 expr       ::= assign
 assign     ::= equality ("=" assign)?

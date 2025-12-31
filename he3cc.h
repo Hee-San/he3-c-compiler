@@ -61,6 +61,7 @@ typedef enum {
     ND_RETURN,     // "return"
     ND_IF,         // "if"
     ND_WHILE,      // "while"
+    ND_FOR,        // "for"
     ND_EXPR_STMT,  // 式文
     ND_LOCAL_VAR,  // ローカル変数
     ND_NUM,        // 整数
@@ -84,10 +85,12 @@ struct Node {
     LocalVar* var;  // kindがND_LOCAL_VARの場合に使う変数名
     int val;        // kindがND_NUMの場合のみ使う数値
 
-    // kindがND_IF, ND_WHILEの場合に使う
+    // kindがND_IF, ND_WHILE, ND_FORの場合に使う
     Node* cond;  // 条件式
     Node* then;  // then節
     Node* els;   // else節
+    Node* init;  // 初期化文 (for文用)
+    Node* inc;   // 増分文 (for文用)
 };
 
 // プログラム全体を表す型
