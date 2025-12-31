@@ -45,6 +45,7 @@ echo $?  # 終了コードとして結果が返される
 program    ::= stmt*
 stmt       ::= "return" expr ";"
              | "if" "(" expr ")" stmt ("else" stmt)?
+             | "while" "(" expr ")" stmt
              | expr ";"
 expr       ::= assign
 assign     ::= equality ("=" assign)?
