@@ -1,243 +1,231 @@
 #include "he3cc.h"
 
 // 現在着目しているトークン
-Token* token;
+Token *token;
 
 // 入力プログラム
-char* user_input;
+char *user_input;
 
 // エラーを報告するための関数
-void error(char* fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    exit(1);
+void error(char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
 }
 
 // エラー箇所を報告する
-void verror_at(char* loc, char* fmt, va_list ap) {
-    int pos = loc - user_input;
-    fprintf(stderr, "%s\n", user_input);
-    fprintf(stderr, "%*s", pos, "");  // pos個の空白を出力
-    fprintf(stderr, "^ ");
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    exit(1);
+void verror_at(char *loc, char *fmt, va_list ap) {
+  int pos = loc - user_input;
+  fprintf(stderr, "%s\n", user_input);
+  fprintf(stderr, "%*s", pos, ""); // pos個の空白を出力
+  fprintf(stderr, "^ ");
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
 }
 
 // エラー箇所を報告する
-void error_at(char* loc, char* fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    verror_at(loc, fmt, ap);
+void error_at(char *loc, char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  verror_at(loc, fmt, ap);
 }
 
 // エラー箇所を報告する
-void error_tok(Token* tok, char* fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    if (tok) {
-        verror_at(tok->str, fmt, ap);
-    }
+void error_tok(Token *tok, char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  if (tok) {
+    verror_at(tok->str, fmt, ap);
+  }
 
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
-    exit(1);
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
+  exit(1);
 }
 
 // 次のトークンが期待している記号のときには、
 // 真を返す。それ以外の場合には偽を返す。
-Token* peek(char* s) {
-    if (token->kind != TK_RESERVED || strlen(s) != token->len ||
-        memcmp(token->str, s, token->len))
-        return NULL;
-    return token;
+Token *peek(char *s) {
+  if (token->kind != TK_RESERVED || strlen(s) != token->len ||
+      memcmp(token->str, s, token->len))
+    return NULL;
+  return token;
 }
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
-Token* consume(char* s) {
-    if (!peek(s))
-        return NULL;
+Token *consume(char *s) {
+  if (!peek(s))
+    return NULL;
 
-    Token* t = token;
-    token = token->next;
-    return t;
+  Token *t = token;
+  token = token->next;
+  return t;
 }
 
 // 次のトークンが識別子の場合、トークンを1つ読み進めてそのトークンを返す。
 // それ以外の場合には偽を返す。
-Token* consume_ident() {
-    if (token->kind != TK_IDENT)
-        return NULL;
-    Token* tok = token;
-    token = token->next;
-    return tok;
+Token *consume_ident() {
+  if (token->kind != TK_IDENT)
+    return NULL;
+  Token *tok = token;
+  token = token->next;
+  return tok;
 }
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
 // それ以外の場合にはエラーを報告する。
-void expect(char* s) {
-    if (!peek(s))
-        error_tok(token, "'%s'が必要です", s);
-    token = token->next;
+void expect(char *s) {
+  if (!peek(s))
+    error_tok(token, "'%s'が必要です", s);
+  token = token->next;
 }
 
 // 次のトークンが数値の場合、トークンを1つ読み進めてその数値を返す。
 // それ以外の場合にはエラーを報告する。
 int expect_number() {
-    if (token->kind != TK_NUM)
-        error_tok(token, "数が必要です");
-    int val = token->val;
-    token = token->next;
-    return val;
+  if (token->kind != TK_NUM)
+    error_tok(token, "数が必要です");
+  int val = token->val;
+  token = token->next;
+  return val;
 }
 
 // 次のトークンが識別子の場合、トークンを1つ読み進めてその文字列を返す。
 // それ以外の場合にはエラーを報告する。
-char* expect_ident() {
-    if (token->kind != TK_IDENT)
-        error_tok(token, "識別子が必要です");
-    char* s = strndup(token->str, token->len);
-    token = token->next;
-    return s;
+char *expect_ident() {
+  if (token->kind != TK_IDENT)
+    error_tok(token, "識別子が必要です");
+  char *s = strndup(token->str, token->len);
+  token = token->next;
+  return s;
 }
 
-bool at_eof() {
-    return token->kind == TK_EOF;
-}
+bool at_eof() { return token->kind == TK_EOF; }
 
 // 文字列pの長さlenの部分文字列をコピーして新しい文字列を作成して返す
-char* strndup(char* p, int len) {
-    char* buf = malloc(len + 1);
-    strncpy(buf, p, len);
-    buf[len] = '\0';
-    return buf;
+char *strndup(char *p, int len) {
+  char *buf = malloc(len + 1);
+  strncpy(buf, p, len);
+  buf[len] = '\0';
+  return buf;
 }
 
 // 新しいトークンを作成してcurに繋げる
-Token* new_token(TokenKind kind, Token* cur, char* str, int len) {
-    Token* tok = calloc(1, sizeof(Token));
-    tok->kind = kind;
-    tok->str = str;
-    tok->len = len;
-    cur->next = tok;
-    return tok;
+Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
+  Token *tok = calloc(1, sizeof(Token));
+  tok->kind = kind;
+  tok->str = str;
+  tok->len = len;
+  cur->next = tok;
+  return tok;
 }
 
-bool startswith(char* p, char* q) {
-    return strncmp(p, q, strlen(q)) == 0;
-}
+bool startswith(char *p, char *q) { return strncmp(p, q, strlen(q)) == 0; }
 
 bool is_alpha(char c) {
-    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+  return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
 }
 
-bool is_alnum(char c) {
-    return is_alpha(c) || ('0' <= c && c <= '9');
-}
+bool is_alnum(char c) { return is_alpha(c) || ('0' <= c && c <= '9'); }
 
 // 予約語をマッチングして新しいトークンを返す。マッチしなければNULLを返す
-Token* try_keyword(Token* cur, char** p) {
-    static char* keywords[] = {
-        "return",
-        "if",
-        "else",
-        "while",
-        "for",
-        "int",
-        "sizeof",
-    };
-    for (int i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
-        int len = strlen(keywords[i]);
-        if (startswith(*p, keywords[i]) && !is_alnum((*p)[len])) {
-            Token* tok = new_token(TK_RESERVED, cur, *p, len);
-            *p += len;
-            return tok;
-        }
+Token *try_keyword(Token *cur, char **p) {
+  static char *keywords[] = {
+      "return", "if", "else", "while", "for", "int", "sizeof",
+  };
+  for (int i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
+    int len = strlen(keywords[i]);
+    if (startswith(*p, keywords[i]) && !is_alnum((*p)[len])) {
+      Token *tok = new_token(TK_RESERVED, cur, *p, len);
+      *p += len;
+      return tok;
     }
-    return NULL;
+  }
+  return NULL;
 }
 
 // 2文字の演算子をマッチングして新しいトークンを返す。マッチしなければNULLを返す
-Token* try_multi_char_op(Token* cur, char** p) {
-    static char* multi_char_ops[] = {
-        "==",
-        "!=",
-        "<=",
-        ">=",
-    };
-    for (int i = 0; i < sizeof(multi_char_ops) / sizeof(*multi_char_ops); i++) {
-        int len = strlen(multi_char_ops[i]);
-        if (startswith(*p, multi_char_ops[i])) {
-            Token* tok = new_token(TK_RESERVED, cur, *p, len);
-            *p += len;
-            return tok;
-        }
+Token *try_multi_char_op(Token *cur, char **p) {
+  static char *multi_char_ops[] = {
+      "==",
+      "!=",
+      "<=",
+      ">=",
+  };
+  for (int i = 0; i < sizeof(multi_char_ops) / sizeof(*multi_char_ops); i++) {
+    int len = strlen(multi_char_ops[i]);
+    if (startswith(*p, multi_char_ops[i])) {
+      Token *tok = new_token(TK_RESERVED, cur, *p, len);
+      *p += len;
+      return tok;
     }
-    return NULL;
+  }
+  return NULL;
 }
 
 // 入力文字列pをトークナイズしてそれを返す
-Token* tokenize() {
-    char* p = user_input;
-    Token head;
-    head.next = NULL;
-    Token* cur = &head;
+Token *tokenize() {
+  char *p = user_input;
+  Token head;
+  head.next = NULL;
+  Token *cur = &head;
 
-    while (*p) {
-        // 空白文字をスキップ
-        if (isspace(*p)) {
-            p++;
-            continue;
-        }
-
-        // 予約語
-        Token* tok = try_keyword(cur, &p);
-        if (tok) {
-            cur = tok;
-            continue;
-        }
-
-        // 2文字の記号
-        tok = try_multi_char_op(cur, &p);
-        if (tok) {
-            cur = tok;
-            continue;
-        }
-
-        // 1文字の記号
-        if (strchr("+-*/()<>;={},&[]", *p)) {
-            cur = new_token(TK_RESERVED, cur, p, 1);
-            p++;
-            continue;
-        }
-
-        // 識別子
-        if (is_alpha(*p)) {
-            char* start = p;
-            p++;
-            while (is_alnum(*p)) {
-                p++;
-            }
-            cur = new_token(TK_IDENT, cur, start, p - start);
-            continue;
-        }
-
-        // 数字
-        if (isdigit(*p)) {
-            char* num_start = p;
-            long val = strtol(p, &p, 10);
-            int len = (int)(p - num_start);
-            cur = new_token(TK_NUM, cur, num_start, len);
-            cur->val = val;
-            continue;
-        }
-
-        error_at(p, "トークナイズできません");
+  while (*p) {
+    // 空白文字をスキップ
+    if (isspace(*p)) {
+      p++;
+      continue;
     }
 
-    new_token(TK_EOF, cur, p, 0);
-    return head.next;
+    // 予約語
+    Token *tok = try_keyword(cur, &p);
+    if (tok) {
+      cur = tok;
+      continue;
+    }
+
+    // 2文字の記号
+    tok = try_multi_char_op(cur, &p);
+    if (tok) {
+      cur = tok;
+      continue;
+    }
+
+    // 1文字の記号
+    if (strchr("+-*/()<>;={},&[]", *p)) {
+      cur = new_token(TK_RESERVED, cur, p, 1);
+      p++;
+      continue;
+    }
+
+    // 識別子
+    if (is_alpha(*p)) {
+      char *start = p;
+      p++;
+      while (is_alnum(*p)) {
+        p++;
+      }
+      cur = new_token(TK_IDENT, cur, start, p - start);
+      continue;
+    }
+
+    // 数字
+    if (isdigit(*p)) {
+      char *num_start = p;
+      long val = strtol(p, &p, 10);
+      int len = (int)(p - num_start);
+      cur = new_token(TK_NUM, cur, num_start, len);
+      cur->val = val;
+      continue;
+    }
+
+    error_at(p, "トークナイズできません");
+  }
+
+  new_token(TK_EOF, cur, p, 0);
+  return head.next;
 }
