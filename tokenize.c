@@ -99,7 +99,7 @@ int expect_number() {
 char *expect_ident() {
   if (token->kind != TK_IDENT)
     error_tok(token, "識別子が必要です");
-  char *s = strndup(token->str, token->len);
+  char *s = duplicate_string_n(token->str, token->len);
   token = token->next;
   return s;
 }
@@ -107,7 +107,7 @@ char *expect_ident() {
 bool at_eof() { return token->kind == TK_EOF; }
 
 // 文字列pの長さlenの部分文字列をコピーして新しい文字列を作成して返す
-char *strndup(char *p, int len) {
+char *duplicate_string_n(char *p, int len) {
   char *buf = malloc(len + 1);
   strncpy(buf, p, len);
   buf[len] = '\0';

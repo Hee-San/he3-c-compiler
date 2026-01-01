@@ -39,7 +39,7 @@ void expect(char *op);
 int expect_number();
 char *expect_ident();
 bool at_eof();
-char *strndup(char *p, int len);
+char *duplicate_string_n(char *p, int len);
 Token *consume_ident();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *tokenize();

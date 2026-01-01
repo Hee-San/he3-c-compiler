@@ -403,7 +403,7 @@ Node *primary() {
   if (tok = consume_ident()) {
     if (consume("(")) {
       Node *node = new_node(ND_FUN_CALL, tok);
-      node->func_name = strndup(tok->str, tok->len);
+      node->func_name = duplicate_string_n(tok->str, tok->len);
       node->args = func_args();
       return node;
     }
