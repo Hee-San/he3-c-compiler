@@ -32,6 +32,7 @@ struct Token {
 void error(char* fmt, ...);
 void error_at(char* loc, char* fmt, ...);
 void error_tok(Token* tok, char* fmt, ...);
+Token* peek(char* s);
 Token* consume(char* op);
 void expect(char* op);
 int expect_number();
@@ -73,12 +74,14 @@ typedef enum {
     ND_EXPR_STMT,  // 式文
     ND_LOCAL_VAR,  // ローカル変数
     ND_NUM,        // 整数
+    ND_NULL,       // 空文
 } NodeKind;
 
 // 変数を表す型
 typedef struct Var Var;
 struct Var {
     char* name;  // 変数名
+    Type* ty;    // 型
     int offset;  // RBP(ベースポインタ)からのオフセット
 };
 
@@ -147,6 +150,9 @@ struct Type {
     TypeKind kind;
     Type* base;  // ポインタ型の場合、指している型
 };
+
+Type* int_type();
+Type* pointer_to(Type* base);
 
 void add_type(Program* prog);
 

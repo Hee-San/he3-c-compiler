@@ -52,9 +52,10 @@ Node* new_local_var(Var* var, Token* tok) {
 }
 
 // 新しいローカル変数をローカル変数リストに追加する関数
-Var* push_local_var(Token* tok) {
+Var* push_local_var(char* name, Type* ty) {
     Var* var = calloc(1, sizeof(Var));
-    var->name = strndup(tok->str, tok->len);
+    var->name = name;
+    var->ty = ty;
 
     VarList* var_list = calloc(1, sizeof(VarList));
     var_list->var = var;
@@ -65,8 +66,15 @@ Var* push_local_var(Token* tok) {
     return var;
 }
 
+// トップレベル
+Program* program();
 Function* function();
+
+// 文
 Node* stmt();
+Node* declaration();
+
+// 式
 Node* expr();
 Node* assign();
 Node* equality();
@@ -75,8 +83,16 @@ Node* add();
 Node* mul();
 Node* unary();
 Node* primary();
+
+// 型
+Type* basetype();
+
+// 関数呼び出し引数
 Node* func_args();
+
+// 関数パラメータ
 VarList* func_params();
+VarList* func_param();
 
 // program = function*
 Program* program() {
@@ -94,11 +110,12 @@ Program* program() {
     return prog;
 }
 
-// function = ident "(" func_params? ")" "{" stmt* "}"
+// function = basetype ident "(" func-params? ")" "{" stmt* "}"
 Function* function() {
     local_vars = NULL;
 
     Function* fn = calloc(1, sizeof(Function));
+    basetype();
     fn->name = expect_ident();
     expect("(");
     fn->params = func_params();
@@ -123,6 +140,7 @@ Function* function() {
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 //      | "{" stmt* "}"
+//      | declaration
 //      | expr ";"
 Node* stmt() {
     Token* tok;
@@ -187,10 +205,32 @@ Node* stmt() {
         return node;
     }
 
+    if (peek("int")) {
+        return declaration();
+    }
+
     tok = token;
     Node* node = new_node_unary_op(ND_EXPR_STMT, expr(), tok);
     expect(";");
     return node;
+}
+
+// declaration = basetype ident ("=" expr)? ";"
+Node* declaration() {
+    Token* tok = token;
+    Type* ty = basetype();
+    Var* var = push_local_var(expect_ident(), ty);
+
+    if (consume(";")) {
+        return new_node(ND_NULL, tok);
+    }
+
+    expect("=");
+    Node* lhs = new_local_var(var, tok);
+    Node* rhs = expr();
+    expect(";");
+    Node* node = new_node_binary_op(ND_ASSIGN, lhs, rhs, tok);
+    return new_node_unary_op(ND_EXPR_STMT, node, tok);
 }
 
 // expr = assign
@@ -304,7 +344,7 @@ Node* primary() {
 
         Var* var = find_local_var(tok);
         if (!var) {
-            var = push_local_var(tok);
+            error_tok(tok, "未定義の変数です");
         }
         return new_local_var(var, tok);
     }
@@ -316,24 +356,14 @@ Node* primary() {
     return new_node_num(expect_number(), tok);
 }
 
-// func-params = ident ("," ident)*
-VarList* func_params() {
-    if (consume(")")) {
-        return NULL;
+// basetype = "int" "*"*
+Type* basetype() {
+    expect("int");
+    Type* ty = int_type();
+    while (consume("*")) {
+        ty = pointer_to(ty);
     }
-
-    VarList* head = calloc(1, sizeof(VarList));
-    head->var = push_local_var(consume_ident());
-    VarList* cur = head;
-
-    while (!consume(")")) {
-        expect(",");
-        cur->next = calloc(1, sizeof(VarList));
-        cur->next->var = push_local_var(consume_ident());
-        cur = cur->next;
-    }
-
-    return head;
+    return ty;
 }
 
 // func-args = "(" (assign ("," assign)*)? ")"
@@ -350,4 +380,30 @@ Node* func_args() {
     }
     expect(")");
     return head;
+}
+
+// func-params = ident ("," ident)*
+VarList* func_params() {
+    if (consume(")")) {
+        return NULL;
+    }
+
+    VarList* head = func_param();
+    VarList* cur = head;
+
+    while (!consume(")")) {
+        expect(",");
+        cur->next = func_param();
+        cur = cur->next;
+    }
+
+    return head;
+}
+
+// func-param = basetype ident
+VarList* func_param() {
+    VarList* vl = calloc(1, sizeof(VarList));
+    Type* ty = basetype();
+    vl->var = push_local_var(expect_ident(), ty);
+    return vl;
 }

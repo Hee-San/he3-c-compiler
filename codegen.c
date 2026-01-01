@@ -51,6 +51,8 @@ void store() {
 
 void gen(Node* node) {
     switch (node->kind) {
+        case ND_NULL:
+            return;
         case ND_NUM:
             printf("  mov x0,  #%d\n", node->val);
             gen_push("x0");

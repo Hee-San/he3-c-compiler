@@ -46,12 +46,19 @@ void error_tok(Token* tok, char* fmt, ...) {
     exit(1);
 }
 
+// 次のトークンが期待している記号のときには、
+// 真を返す。それ以外の場合には偽を返す。
+Token* peek(char* s) {
+    if (token->kind != TK_RESERVED || strlen(s) != token->len ||
+        memcmp(token->str, s, token->len))
+        return NULL;
+    return token;
+}
+
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
-Token* consume(char* op) {
-    if (token->kind != TK_RESERVED ||
-        strlen(op) != token->len ||
-        strncmp(token->str, op, token->len) != 0)
+Token* consume(char* s) {
+    if (!peek(s))
         return NULL;
 
     Token* t = token;
@@ -59,6 +66,8 @@ Token* consume(char* op) {
     return t;
 }
 
+// 次のトークンが識別子の場合、トークンを1つ読み進めてそのトークンを返す。
+// それ以外の場合には偽を返す。
 Token* consume_ident() {
     if (token->kind != TK_IDENT)
         return NULL;
@@ -69,11 +78,9 @@ Token* consume_ident() {
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
 // それ以外の場合にはエラーを報告する。
-void expect(char* op) {
-    if (token->kind != TK_RESERVED ||
-        strlen(op) != token->len ||
-        strncmp(token->str, op, token->len) != 0)
-        error_tok(token, "'%s'が必要です", op);
+void expect(char* s) {
+    if (!peek(s))
+        error_tok(token, "'%s'が必要です", s);
     token = token->next;
 }
 
@@ -139,6 +146,7 @@ Token* try_keyword(Token* cur, char** p) {
         "else",
         "while",
         "for",
+        "int",
     };
     for (int i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
         int len = strlen(keywords[i]);

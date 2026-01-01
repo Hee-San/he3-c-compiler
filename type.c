@@ -42,10 +42,14 @@ void visit(Node* node) {
         case ND_NE:
         case ND_LT:
         case ND_LE:
-        case ND_LOCAL_VAR:
         case ND_FUN_CALL:
         case ND_NUM:
             node->ty = int_type();
+            return;
+
+        // 変数の場合、変数の型を継承
+        case ND_LOCAL_VAR:
+            node->ty = node->var->ty;
             return;
 
         // 加算: ptr + int | int + int
@@ -83,10 +87,9 @@ void visit(Node* node) {
 
         // デリファレンス: T* -> T
         case ND_DEREF:
-            if (node->lhs->ty->kind == TY_PTR)
-                node->ty = node->lhs->ty->base;
-            else
-                node->ty = int_type();  // TODO: エラー処理
+            if (node->lhs->ty->kind != TY_PTR)
+                error_tok(node->tok, "ポインタではない型のデリファレンスはできません");
+            node->ty = node->lhs->ty->base;
             return;
     }
 }

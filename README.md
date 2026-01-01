@@ -43,12 +43,13 @@ echo $?  # 終了コードとして結果が返される
 
 ```
 program     ::= function*
-function    ::= ident "(" func-params? ")" "{" stmt* "}"
+function    ::= basetype ident "(" func-params? ")" "{" stmt* "}"
 stmt        ::= "return" expr ";"
               | "if" "(" expr ")" stmt ("else" stmt)?
               | "while" "(" expr ")" stmt
               | "for" "(" expr? ";" expr? ";" expr? ")" stmt
               | "{" stmt* "}"
+              | declaration
               | expr ";"
 expr        ::= assign
 assign      ::= equality ("=" assign)?
@@ -58,10 +59,14 @@ add         ::= mul (("+" | "-") mul)*
 mul         ::= unary (("*" | "/") unary)*
 unary       ::= ("+" | "-" | "*" | "&")? unary | primary
 primary     ::= "(" expr ")" | ident func-args? | num
+declaration ::= basetype ident ("=" expr)? ";"
 
-func-params ::= ident ("," ident)*
+func-params ::= param ("," param)*
+param       ::= basetype ident
 ident       ::= letter (letter | digit)*
 func-args   ::= "(" (assign ("," assign)*)? ")"
+
+basetype    ::= "int" "*"*
 num         ::= digit+
 letter      ::= [a-zA-Z_]
 digit       ::= [0-9]
