@@ -393,15 +393,15 @@ Node* postfix() {
     return node;
 }
 
-// primary = "(" expr ")" | ident func-args? | num
+// primary = "(" expr ")" | "sizeof" unary | ident func-args? | num
 Node* primary() {
+    Token* tok;
     if (consume("(")) {
         Node* node = expr();
         expect(")");
         return node;
     }
 
-    Token* tok;
     if (tok = consume_ident()) {
         if (consume("(")) {
             Node* node = new_node(ND_FUN_CALL, tok);
@@ -415,6 +415,10 @@ Node* primary() {
             error_tok(tok, "未定義の変数です");
         }
         return new_local_var(var, tok);
+    }
+
+    if (tok = consume("sizeof")) {
+        return new_node_unary_op(ND_SIZEOF, unary(), tok);
     }
 
     tok = token;

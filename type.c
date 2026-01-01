@@ -115,6 +115,14 @@ void visit(Node* node) {
                 error_tok(node->tok, "ポインタではない型のデリファレンスはできません");
             node->ty = node->lhs->ty->base;
             return;
+
+        // sizeof演算子: コンパイル時に型のサイズを計算して整数ノードに変換
+        case ND_SIZEOF:
+            node->kind = ND_NUM;
+            node->ty = int_type();
+            node->val = size_of(node->lhs->ty);
+            node->lhs = NULL;  // 子ノードは不要になる
+            return;
     }
 }
 

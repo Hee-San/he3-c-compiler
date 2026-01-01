@@ -72,8 +72,7 @@ unary         ::= ("+" | "-" | "*" | "&")? unary
 
 postfix       ::= primary ("[" expr "]")*
 
-primary       ::= "(" expr ")" | ident func-args? | num
-
+primary       ::= "(" expr ")" | "sizeof" unary | ident func-args? | num
 func-args     ::= "(" (assign ("," assign)*)? ")"
 ```
 
