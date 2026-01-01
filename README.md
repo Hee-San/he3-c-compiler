@@ -42,34 +42,36 @@ echo $?  # 終了コードとして結果が返される
 ## 文法定義 (EBNF)
 
 ```
-program     ::= function*
-function    ::= basetype ident "(" func-params? ")" "{" stmt* "}"
-stmt        ::= "return" expr ";"
-              | "if" "(" expr ")" stmt ("else" stmt)?
-              | "while" "(" expr ")" stmt
-              | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-              | "{" stmt* "}"
-              | declaration
-              | expr ";"
-expr        ::= assign
-assign      ::= equality ("=" assign)?
-equality    ::= relational (("==" | "!=") relational)*
-relational  ::= add (("<" | "<=" | ">" | ">=") add)*
-add         ::= mul (("+" | "-") mul)*
-mul         ::= unary (("*" | "/") unary)*
-unary       ::= ("+" | "-" | "*" | "&")? unary | primary
-primary     ::= "(" expr ")" | ident func-args? | num
-declaration ::= basetype ident ("=" expr)? ";"
+program       ::= function*
+function      ::= basetype ident "(" func-params? ")" "{" stmt* "}"
 
-func-params ::= param ("," param)*
-param       ::= basetype ident
-ident       ::= letter (letter | digit)*
-func-args   ::= "(" (assign ("," assign)*)? ")"
+basetype      ::= "int" "*"*
+type-suffix   ::= ("[" num "]")*
 
-basetype    ::= "int" "*"*
-num         ::= digit+
-letter      ::= [a-zA-Z_]
-digit       ::= [0-9]
+func-params   ::= func-param ("," func-param)*
+func-param    ::= basetype ident type-suffix
+
+stmt          ::= "return" expr ";"
+                | "if" "(" expr ")" stmt ("else" stmt)?
+                | "while" "(" expr ")" stmt
+                | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+                | "{" stmt* "}"
+                | declaration
+                | expr ";"
+
+declaration   ::= basetype ident type-suffix ("=" expr)? ";"
+
+expr          ::= assign
+assign        ::= equality ("=" assign)?
+equality      ::= relational (("==" | "!=") relational)*
+relational    ::= add (("<" | "<=" | ">" | ">=") add)*
+add           ::= mul (("+" | "-") mul)*
+mul           ::= unary (("*" | "/") unary)*
+unary         ::= ("+" | "-" | "*" | "&")? unary
+                | primary
+primary       ::= "(" expr ")" | ident func-args? | num
+
+func-args     ::= "(" (assign ("," assign)*)? ")"
 ```
 
 ## テスト

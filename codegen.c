@@ -34,6 +34,13 @@ void gen_addr(Node* node) {
     error_tok(node->tok, "代入の左辺値が変数ではありません");
 }
 
+void gen_lval(Node* node) {
+    if (node->ty->kind == TY_ARRAY) {
+        error_tok(node->tok, "配列は代入の左辺値になれません");
+    }
+    gen_addr(node);
+}
+
 // スタックトップにあるアドレスから値をロードして、値をスタックにプッシュする
 void load() {
     gen_pop("x0");               // スタックからアドレスを取り出してx0にロード
@@ -64,10 +71,12 @@ void gen(Node* node) {
             return;
         case ND_LOCAL_VAR:
             gen_addr(node);
-            load();
+            if (node->ty->kind != TY_ARRAY) {
+                load();
+            }
             return;
         case ND_ASSIGN:
-            gen_addr(node->lhs);
+            gen_lval(node->lhs);
             gen(node->rhs);
             store();
             return;
@@ -105,7 +114,9 @@ void gen(Node* node) {
             return;
         case ND_DEREF:
             gen(node->lhs);
-            load();
+            if (node->ty->kind != TY_ARRAY) {
+                load();
+            }
             return;
         case ND_IF: {
             int seq = labelseq++;
@@ -206,17 +217,17 @@ void gen(Node* node) {
 
     switch (node->kind) {
         case ND_ADD:
-            if (node->ty->kind == TY_PTR) {
+            if (node->ty->base) {
                 // ポインタ型の場合、スケーリングする
-                printf("  mov x2, #%d\n", 16);  // int型のサイズは16バイト
+                printf("  mov x2, #%d\n", size_of(node->ty->base));
                 printf("  mul x1, x1, x2\n");
             }
             printf("  add x0, x0, x1\n");
             break;
         case ND_SUB:
-            if (node->ty->kind == TY_PTR) {
+            if (node->ty->base) {
                 // ポインタ型の場合、スケーリングする
-                printf("  mov x2, #%d\n", 16);  // int型のサイズは16バイト
+                printf("  mov x2, #%d\n", size_of(node->ty->base));
                 printf("  mul x1, x1, x2\n");
             }
             printf("  sub x0, x0, x1\n");

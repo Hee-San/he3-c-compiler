@@ -15,6 +15,24 @@ Type* pointer_to(Type* base) {
     return ty;
 }
 
+// 配列型を表すTypeを生成
+Type* array_of(Type* base, int size) {
+    Type* ty = calloc(1, sizeof(Type));
+    ty->kind = TY_ARRAY;
+    ty->base = base;
+    ty->array_size = size;
+    return ty;
+}
+
+// 型のサイズを返す関数
+int size_of(Type* ty) {
+    if (ty->kind == TY_INT || ty->kind == TY_PTR) {
+        return 16;
+    } else if (ty->kind == TY_ARRAY) {
+        return size_of(ty->base) * ty->array_size;
+    }
+}
+
 void visit(Node* node) {
     if (!node)
         return;
@@ -55,14 +73,14 @@ void visit(Node* node) {
         // 加算: ptr + int | int + int
         case ND_ADD:
             // int + ptr -> ptr + int
-            if (node->rhs->ty->kind == TY_PTR) {
+            if (node->rhs->ty->base) {
                 Node* tmp = node->lhs;
                 node->lhs = node->rhs;
                 node->rhs = tmp;
             }
 
             // ptr + ptr はエラー
-            if (node->rhs->ty->kind == TY_PTR)
+            if (node->rhs->ty->base)
                 error_tok(node->tok, "ポインタ同士の加算はできません");
 
             node->ty = node->lhs->ty;
@@ -70,7 +88,7 @@ void visit(Node* node) {
 
         // 減算: ptr - int | ptr - ptr
         case ND_SUB:
-            if (node->rhs->ty->kind == TY_PTR)
+            if (node->rhs->ty->base)
                 error_tok(node->tok, "ポインタを引くことはできません");
             node->ty = node->lhs->ty;
             return;
@@ -82,12 +100,18 @@ void visit(Node* node) {
 
         // アドレス取得: T -> T*
         case ND_ADDR:
-            node->ty = pointer_to(node->lhs->ty);
+            if (node->lhs->ty->kind == TY_ARRAY) {
+                // 配列の場合、配列の先頭要素へのポインタに変換
+                node->ty = pointer_to(node->lhs->ty->base);
+            } else {
+                // それ以外の場合、単純にポインタ型に変換
+                node->ty = pointer_to(node->lhs->ty);
+            }
             return;
 
         // デリファレンス: T* -> T
         case ND_DEREF:
-            if (node->lhs->ty->kind != TY_PTR)
+            if (!node->lhs->ty->base)
                 error_tok(node->tok, "ポインタではない型のデリファレンスはできません");
             node->ty = node->lhs->ty->base;
             return;

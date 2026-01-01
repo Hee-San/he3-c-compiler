@@ -20,8 +20,9 @@ int main(int argc, char** argv) {
         // ローカル変数のオフセットを決定する
         int offset = 0;
         for (VarList* var_list = fn->local_vars; var_list; var_list = var_list->next) {
-            offset += 16;
-            var_list->var->offset = offset;
+            Var* var = var_list->var;
+            offset += size_of(var->ty);
+            var->offset = offset;
         }
         fn->local_var_stack_size = offset;
     }

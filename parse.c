@@ -70,6 +70,14 @@ Var* push_local_var(char* name, Type* ty) {
 Program* program();
 Function* function();
 
+// 型
+Type* basetype();
+Type* type_suffix(Type* base);
+
+// 関数パラメータ
+VarList* func_params();
+VarList* func_param();
+
 // 文
 Node* stmt();
 Node* declaration();
@@ -84,15 +92,8 @@ Node* mul();
 Node* unary();
 Node* primary();
 
-// 型
-Type* basetype();
-
 // 関数呼び出し引数
 Node* func_args();
-
-// 関数パラメータ
-VarList* func_params();
-VarList* func_param();
 
 // program = function*
 Program* program() {
@@ -133,6 +134,56 @@ Function* function() {
     fn->node = head.next;
     fn->local_vars = local_vars;
     return fn;
+}
+
+// basetype = "int" "*"*
+Type* basetype() {
+    expect("int");
+    Type* ty = int_type();
+    while (consume("*")) {
+        ty = pointer_to(ty);
+    }
+    return ty;
+}
+
+// type-suffix = ("[" num "]")*
+Type* type_suffix(Type* base) {
+    if (!consume("[")) {
+        return base;
+    }
+    int sz = expect_number();
+    expect("]");
+    base = type_suffix(base);
+    return array_of(base, sz);
+}
+
+// func-params = ident ("," ident)*
+VarList* func_params() {
+    if (consume(")")) {
+        return NULL;
+    }
+
+    VarList* head = func_param();
+    VarList* cur = head;
+
+    while (!consume(")")) {
+        expect(",");
+        cur->next = func_param();
+        cur = cur->next;
+    }
+
+    return head;
+}
+
+// func-param = basetype ident
+VarList* func_param() {
+    Type* ty = basetype();
+    char* name = expect_ident();
+    ty = type_suffix(ty);
+
+    VarList* vl = calloc(1, sizeof(VarList));
+    vl->var = push_local_var(name, ty);
+    return vl;
 }
 
 // stmt = "return" expr ";"
@@ -215,11 +266,13 @@ Node* stmt() {
     return node;
 }
 
-// declaration = basetype ident ("=" expr)? ";"
+// declaration = basetype ident ("[" num "]")* ("=" expr)? ";"
 Node* declaration() {
     Token* tok = token;
     Type* ty = basetype();
-    Var* var = push_local_var(expect_ident(), ty);
+    char* name = expect_ident();
+    ty = type_suffix(ty);
+    Var* var = push_local_var(name, ty);
 
     if (consume(";")) {
         return new_node(ND_NULL, tok);
@@ -356,16 +409,6 @@ Node* primary() {
     return new_node_num(expect_number(), tok);
 }
 
-// basetype = "int" "*"*
-Type* basetype() {
-    expect("int");
-    Type* ty = int_type();
-    while (consume("*")) {
-        ty = pointer_to(ty);
-    }
-    return ty;
-}
-
 // func-args = "(" (assign ("," assign)*)? ")"
 Node* func_args() {
     if (consume(")")) {
@@ -380,30 +423,4 @@ Node* func_args() {
     }
     expect(")");
     return head;
-}
-
-// func-params = ident ("," ident)*
-VarList* func_params() {
-    if (consume(")")) {
-        return NULL;
-    }
-
-    VarList* head = func_param();
-    VarList* cur = head;
-
-    while (!consume(")")) {
-        expect(",");
-        cur->next = func_param();
-        cur = cur->next;
-    }
-
-    return head;
-}
-
-// func-param = basetype ident
-VarList* func_param() {
-    VarList* vl = calloc(1, sizeof(VarList));
-    Type* ty = basetype();
-    vl->var = push_local_var(expect_ident(), ty);
-    return vl;
 }
