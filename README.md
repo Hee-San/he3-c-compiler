@@ -68,7 +68,10 @@ relational    ::= add (("<" | "<=" | ">" | ">=") add)*
 add           ::= mul (("+" | "-") mul)*
 mul           ::= unary (("*" | "/") unary)*
 unary         ::= ("+" | "-" | "*" | "&")? unary
-                | primary
+                | postfix
+
+postfix       ::= primary ("[" expr "]")*
+
 primary       ::= "(" expr ")" | ident func-args? | num
 
 func-args     ::= "(" (assign ("," assign)*)? ")"

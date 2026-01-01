@@ -90,6 +90,7 @@ Node* relational();
 Node* add();
 Node* mul();
 Node* unary();
+Node* postfix();
 Node* primary();
 
 // 関数呼び出し引数
@@ -364,7 +365,7 @@ Node* mul() {
     }
 }
 
-// unary = ("+" | "-" | "*" | "&")? unary | primary
+// unary = ("+" | "-" | "*" | "&")? unary | postfix
 Node* unary() {
     Token* tok;
     if (tok = consume("+"))
@@ -374,8 +375,22 @@ Node* unary() {
     if (tok = consume("*"))
         return new_node_unary_op(ND_DEREF, unary(), tok);
     if (tok = consume("&"))
-        return new_node_unary_op(ND_ADDR, primary(), tok);
-    return primary();
+        return new_node_unary_op(ND_ADDR, unary(), tok);
+    return postfix();
+}
+
+// postfix = primary ("[" expr "]")*
+Node* postfix() {
+    Node* node = primary();
+    Token* tok;
+
+    while (tok = consume("[")) {
+        // x[i] は *(x+i) の構文糖衣
+        Node* exp = new_node_binary_op(ND_ADD, node, expr(), tok);
+        expect("]");
+        node = new_node_unary_op(ND_DEREF, exp, tok);
+    }
+    return node;
 }
 
 // primary = "(" expr ")" | ident func-args? | num
