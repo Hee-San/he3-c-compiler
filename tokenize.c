@@ -261,6 +261,23 @@ Token *tokenize() {
       continue;
     }
 
+    //　コメント文をスキップ
+    if (startswith(p, "//")) {
+      p += 2;
+      while (*p != '\n')
+        p++;
+      continue;
+    }
+
+    // ブロックコメントをスキップ
+    if (startswith(p, "/*")) {
+      char *q = strstr(p + 2, "*/");
+      if (!q)
+        error_at(p, "コメント文の終端がありません");
+      p = q + 2;
+      continue;
+    }
+
     // 予約語
     Token *tok = try_keyword(cur, &p);
     if (tok) {
