@@ -3,6 +3,9 @@
 // 現在着目しているトークン
 Token *token;
 
+// 入力ファイル名
+char *filename;
+
 // 入力プログラム
 char *user_input;
 
@@ -15,11 +18,33 @@ void error(char *fmt, ...) {
   exit(1);
 }
 
-// エラー箇所を報告する
+// エラーメッセージを以下の形式で出力:
+//
+// foo.c:10: x = y + 1;
+//           ^ エラーメッセージ
 void verror_at(char *loc, char *fmt, va_list ap) {
-  int pos = loc - user_input;
-  fprintf(stderr, "%s\n", user_input);
-  fprintf(stderr, "%*s", pos, ""); // pos個の空白を出力
+  // loc を含む行を探す
+  char *line = loc;
+  while (user_input < line && line[-1] != '\n')
+    line--;
+
+  char *end = loc;
+  while (*end != '\n')
+    end++;
+
+  // 行番号を取得
+  int line_num = 1;
+  for (char *p = user_input; p < line; p++)
+    if (*p == '\n')
+      line_num++;
+
+  // 行を出力
+  int indent = fprintf(stderr, "%s:%d: ", filename, line_num);
+  fprintf(stderr, "%.*s\n", (int)(end - line), line);
+
+  // エラー位置を示す
+  int pos = loc - line + indent;
+  fprintf(stderr, "%*s", pos, "");
   fprintf(stderr, "^ ");
   vfprintf(stderr, fmt, ap);
   fprintf(stderr, "\n");

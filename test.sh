@@ -17,7 +17,7 @@ assert() {
   expected="$1"
   input="$2"
 
-  ./he3cc "$input" > tmp.s
+  ./he3cc <(echo "$input") > tmp.s
   cc -o tmp tmp.s tmp2.o
   ./tmp
   actual="$?"

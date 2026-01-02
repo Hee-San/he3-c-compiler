@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -48,6 +49,7 @@ Token *consume_ident();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 Token *tokenize();
 
+extern char *filename;
 extern char *user_input;
 extern Token *token;
 

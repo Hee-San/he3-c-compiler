@@ -1,5 +1,25 @@
 #include "he3cc.h"
 
+// ファイルの内容を読み込んで返す
+char *read_file(char *path) {
+  // Open and read the file.
+  FILE *fp = fopen(path, "r");
+  if (!fp)
+    error("ファイルを開けません %s: %s", path, strerror(errno));
+
+  int filemax = 10 * 1024 * 1024; // 10MB
+  char *buf = malloc(filemax);
+  int size = fread(buf, 1, filemax - 2, fp);
+  if (!feof(fp))
+    error("%s: ファイルが大きすぎます", path);
+
+  // 文字列が "\n\0" で終わることを保証
+  if (size == 0 || buf[size - 1] != '\n')
+    buf[size++] = '\n';
+  buf[size] = '\0';
+  return buf;
+}
+
 int align_to(int n, int align) { return (n + align - 1) & ~(align - 1); }
 
 int main(int argc, char **argv) {
@@ -8,8 +28,11 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  // ファイルから読み込む
+  filename = argv[1];
+  user_input = read_file(argv[1]);
+
   // トークナイズする
-  user_input = argv[1];
   token = tokenize();
 
   // パースする
