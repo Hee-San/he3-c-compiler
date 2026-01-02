@@ -29,7 +29,9 @@ clean:
 
 # テストの実行
 test: $(TARGET)
-	./test.sh
+	./he3cc tests > tmp.s
+	gcc -static -o tmp tmp.s
+	./tmp
 
 # ヘルプ
 help:
