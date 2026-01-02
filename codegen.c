@@ -26,13 +26,18 @@ void gen_addr(Node *node) {
   case ND_VAR: {
     Var *var = node->var;
     if (var->is_local) {
-      // ローカル変数: フレームポインタ(x29)からの相対オフセット
+      // ローカル変数:
+      // スタック上に配置されるため、フレームポインタ(x29)からの相対オフセットで参照
       int offset = node->var->offset;
       printf("  sub x0, x29, #%d\n", offset);
     } else {
-      // グローバル変数: ラベルの絶対アドレスを取得
-      // ldr =label はアセンブラがリテラルプールに展開する
-      printf("  ldr x0, =.L.%s\n", var->name);
+      // グローバル変数:
+      // データセクションに配置されるため、ラベル経由でアドレスを取得
+      // ARM64の即値制限(12bit)により、64bitアドレスは2命令で構築:
+      //   1. adrp: 上位ビット（4KBページアドレス）
+      //   2. add :lo12:: 下位12bit（ページ内オフセット）
+      printf("  adrp x0, .L.%s\n", var->name);
+      printf("  add x0, x0, :lo12:.L.%s\n", var->name);
     }
     gen_push("x0");
     return;
