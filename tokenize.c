@@ -213,6 +213,22 @@ Token *tokenize() {
       continue;
     }
 
+    // 文字列リテラル
+    if (*p == '"') {
+      char *q = p++;
+      while (*p && *p != '"')
+        p++;
+      if (!*p)
+        error_at(q, "文字列の終端がありません");
+      p++;
+
+      cur = new_token(TK_STR, cur, q, p - q);
+      cur->contents =
+          duplicate_string_n(q + 1, p - q - 2); // 中身（引用符除く）
+      cur->contents_len = p - q - 1;            // 長さ + \0
+      continue;
+    }
+
     // 数字
     if (isdigit(*p)) {
       char *num_start = p;

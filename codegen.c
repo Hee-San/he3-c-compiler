@@ -301,14 +301,21 @@ void gen(Node *node) {
   gen_push("x0");
 }
 
-// グローバル変数のデータセクションを出力する
-void emit_global_vars(Program *prog) {
+// dataセクションを出力する
+void emit_data(Program *prog) {
   printf(".data\n");
   for (VarList *vl = prog->global_vars; vl; vl = vl->next) {
     Var *var = vl->var;
     printf(".globl .L.%s\n", var->name);
     printf(".L.%s:\n", var->name);
-    printf("  .zero %d\n", size_of(var->ty));
+    if (var->contents) {
+      // 文字列リテラル
+      for (int i = 0; i < var->contents_len; i++)
+        printf("  .byte %d\n", var->contents[i]);
+    } else {
+      // グローバル変数
+      printf("  .zero %d\n", size_of(var->ty));
+    }
   }
 }
 
@@ -321,8 +328,8 @@ void load_arg(Var *var, int idx) {
     printf("  str %s, [x29, #-%d]\n", argreg8[idx], var->offset);
 }
 
-// 関数のコードセクションを出力する
-void emit_functions(Program *prog) {
+// textセクションを出力する
+void emit_text(Program *prog) {
   printf("  .text\n");
 
   for (Function *fn = prog->fns; fn; fn = fn->next) {
@@ -357,6 +364,6 @@ void emit_functions(Program *prog) {
 }
 
 void codegen(Program *prog) {
-  emit_global_vars(prog);
-  emit_functions(prog);
+  emit_data(prog);
+  emit_text(prog);
 }

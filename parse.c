@@ -79,6 +79,14 @@ Var *push_var(char *name, Type *ty, bool is_local) {
   return var;
 }
 
+// 新しい匿名ラベルを生成する関数
+char *new_label() {
+  static int cnt = 0;
+  char buf[20];
+  sprintf(buf, ".L.data.%d", cnt++);
+  return duplicate_string_n(buf, 20);
+}
+
 // トップレベル
 Program *program();
 void global_var();
@@ -437,7 +445,7 @@ Node *postfix() {
   return node;
 }
 
-// primary = "(" expr ")" | "sizeof" unary | ident func-args? | num
+// primary = "(" expr ")" | "sizeof" unary | ident func-args? | str | num
 Node *primary() {
   Token *tok;
   if (consume("(")) {
@@ -466,6 +474,18 @@ Node *primary() {
   }
 
   tok = token;
+  if (tok->kind == TK_STR) {
+    token = token->next;
+
+    // char[N] 型を作る
+    Type *ty = array_of(char_type(), tok->contents_len);
+    // 匿名グローバル変数として登録
+    Var *var = push_var(new_label(), ty, false);
+    var->contents = tok->contents;
+    var->contents_len = tok->contents_len;
+    return new_var(var, tok);
+  }
+
   if (tok->kind != TK_NUM)
     error_tok(tok, "式が必要です");
 
