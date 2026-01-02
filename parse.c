@@ -1,19 +1,22 @@
 #include "he3cc.h"
 
+// local_vars: 関数内の全ローカル変数
+//             スタックサイズ計算・オフセット割り当てに使う
+//             ブロックを抜けても変数は残る（メモリは確保したまま）
 VarList *local_vars;
+
+// global_vars: 全グローバル変数
+//              .data セクションに出力される
 VarList *global_vars;
+
+// scope_vars: 現在のスコープで「見える」変数
+//             find_var() での名前解決に使う
+//             ブロックを抜けると復元される（シャドウイング対応）
+VarList *scope_vars;
 
 // 既存の変数を名前で検索する関数
 Var *find_var(Token *tok) {
-  for (VarList *var_list = local_vars; var_list; var_list = var_list->next) {
-    Var *var = var_list->var;
-    if (tok->len == strlen(var->name) &&
-        !memcmp(tok->str, var->name, tok->len)) {
-      return var;
-    }
-  }
-
-  for (VarList *var_list = global_vars; var_list; var_list = var_list->next) {
+  for (VarList *var_list = scope_vars; var_list; var_list = var_list->next) {
     Var *var = var_list->var;
     if (tok->len == strlen(var->name) &&
         !memcmp(tok->str, var->name, tok->len)) {
@@ -76,6 +79,12 @@ Var *push_var(char *name, Type *ty, bool is_local) {
     var_list->next = global_vars;
     global_vars = var_list;
   }
+
+  VarList *sc = calloc(1, sizeof(VarList));
+  sc->var = var;
+  sc->next = scope_vars;
+  scope_vars = sc;
+
   return var;
 }
 
@@ -158,6 +167,7 @@ void global_var() {
   expect(";");
   push_var(name, ty, false);
 }
+
 // function = basetype ident "(" func-params? ")" "{" stmt* "}"
 Function *function() {
   local_vars = NULL;
@@ -166,6 +176,7 @@ Function *function() {
   basetype();
   fn->name = expect_ident();
   expect("(");
+
   fn->params = func_params();
   expect("{");
 
@@ -302,10 +313,16 @@ Node *stmt() {
     head.next = NULL;
     Node *cur = &head;
 
+    // 新しいスコープを作成
+    VarList *sc = scope_vars;
+
     while (!consume("}")) {
       cur->next = stmt();
       cur = cur->next;
     }
+
+    // スコープを復元
+    scope_vars = sc;
 
     node->body = head.next;
     return node;
