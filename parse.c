@@ -1,13 +1,22 @@
 #include "he3cc.h"
 
 VarList *local_vars;
+VarList *global_vars;
 
-// 既存のローカル変数を名前で検索する関数
-Var *find_local_var(Token *tok) {
+// 既存の変数を名前で検索する関数
+Var *find_var(Token *tok) {
   for (VarList *var_list = local_vars; var_list; var_list = var_list->next) {
     Var *var = var_list->var;
     if (tok->len == strlen(var->name) &&
-        strncmp(tok->str, var->name, tok->len) == 0) {
+        !memcmp(tok->str, var->name, tok->len)) {
+      return var;
+    }
+  }
+
+  for (VarList *var_list = global_vars; var_list; var_list = var_list->next) {
+    Var *var = var_list->var;
+    if (tok->len == strlen(var->name) &&
+        !memcmp(tok->str, var->name, tok->len)) {
       return var;
     }
   }
@@ -44,30 +53,35 @@ Node *new_node_num(int val, Token *tok) {
   return node;
 }
 
-// ローカル変数ノードを生成する関数
-Node *new_local_var(Var *var, Token *tok) {
-  Node *node = new_node(ND_LOCAL_VAR, tok);
+// 変数ノードを生成する関数
+Node *new_var(Var *var, Token *tok) {
+  Node *node = new_node(ND_VAR, tok);
   node->var = var;
   return node;
 }
 
-// 新しいローカル変数をローカル変数リストに追加する関数
-Var *push_local_var(char *name, Type *ty) {
+// 新しい変数を変数リストに追加する関数
+Var *push_var(char *name, Type *ty, bool is_local) {
   Var *var = calloc(1, sizeof(Var));
   var->name = name;
   var->ty = ty;
+  var->is_local = is_local;
 
   VarList *var_list = calloc(1, sizeof(VarList));
   var_list->var = var;
-  var_list->next = local_vars;
-
-  // オフセットの割り当てはパーサーの役割ではないので、ここでは行わない
-  local_vars = var_list;
+  if (is_local) {
+    var_list->next = local_vars;
+    local_vars = var_list;
+  } else {
+    var_list->next = global_vars;
+    global_vars = var_list;
+  }
   return var;
 }
 
 // トップレベル
 Program *program();
+void global_var();
 Function *function();
 
 // 型
@@ -96,22 +110,46 @@ Node *primary();
 // 関数呼び出し引数
 Node *func_args();
 
+// 先読み
+bool peek_is_function() {
+  Token *saved = token;
+  basetype();
+  bool result = consume_ident() && consume("(");
+  token = saved;
+  return result;
+}
+
 // program = function*
 Program *program() {
   Function head;
   head.next = NULL;
   Function *cur = &head;
+  global_vars = NULL;
 
   while (!at_eof()) {
-    cur->next = function();
-    cur = cur->next;
+    if (peek_is_function()) {
+      cur->next = function();
+      cur = cur->next;
+    } else {
+      global_var();
+    }
   }
 
   Program *prog = calloc(1, sizeof(Program));
+  prog->global_vars = global_vars;
   prog->fns = head.next;
   return prog;
 }
 
+// global-var = basetype ident ("[" num "]")* ("=" expr)? ";"
+void global_var() {
+
+  Type *ty = basetype();
+  char *name = expect_ident();
+  ty = type_suffix(ty);
+  expect(";");
+  push_var(name, ty, false);
+}
 // function = basetype ident "(" func-params? ")" "{" stmt* "}"
 Function *function() {
   local_vars = NULL;
@@ -183,7 +221,7 @@ VarList *func_param() {
   ty = type_suffix(ty);
 
   VarList *vl = calloc(1, sizeof(VarList));
-  vl->var = push_local_var(name, ty);
+  vl->var = push_var(name, ty, true);
   return vl;
 }
 
@@ -273,14 +311,14 @@ Node *declaration() {
   Type *ty = basetype();
   char *name = expect_ident();
   ty = type_suffix(ty);
-  Var *var = push_local_var(name, ty);
+  Var *var = push_var(name, ty, true);
 
   if (consume(";")) {
     return new_node(ND_NULL, tok);
   }
 
   expect("=");
-  Node *lhs = new_local_var(var, tok);
+  Node *lhs = new_var(var, tok);
   Node *rhs = expr();
   expect(";");
   Node *node = new_node_binary_op(ND_ASSIGN, lhs, rhs, tok);
@@ -408,11 +446,11 @@ Node *primary() {
       return node;
     }
 
-    Var *var = find_local_var(tok);
+    Var *var = find_var(tok);
     if (!var) {
       error_tok(tok, "未定義の変数です");
     }
-    return new_local_var(var, tok);
+    return new_var(var, tok);
   }
 
   if ((tok = consume("sizeof"))) {

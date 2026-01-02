@@ -74,7 +74,7 @@ typedef enum {
   ND_BLOCK,     // ブロック { ... }
   ND_FUN_CALL,  // 関数呼び出し
   ND_EXPR_STMT, // 式文
-  ND_LOCAL_VAR, // ローカル変数
+  ND_VAR,       // 変数
   ND_NUM,       // 整数
   ND_NULL,      // 空文
 } NodeKind;
@@ -82,8 +82,11 @@ typedef enum {
 // 変数を表す型
 typedef struct Var Var;
 struct Var {
-  char *name; // 変数名
-  Type *ty;   // 型
+  char *name;    // 変数名
+  Type *ty;      // 型
+  bool is_local; // ローカル変数かどうか
+
+  // ローカル変数の場合
   int offset; // RBP(ベースポインタ)からのオフセット
 };
 
@@ -134,7 +137,8 @@ struct Function {
 
 // プログラム全体を表す型
 typedef struct {
-  Function *fns;
+  VarList *global_vars; // グローバル変数リスト
+  Function *fns;        // 関数リスト
 } Program;
 
 Program *program();

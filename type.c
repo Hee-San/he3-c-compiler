@@ -67,7 +67,7 @@ void visit(Node *node) {
     return;
 
   // 変数の場合、変数の型を継承
-  case ND_LOCAL_VAR:
+  case ND_VAR:
     node->ty = node->var->ty;
     return;
 

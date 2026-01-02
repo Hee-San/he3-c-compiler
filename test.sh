@@ -141,4 +141,14 @@ assert 17 'int main() { int x[3][4]; return sizeof(**x) + 1; }'
 assert 17 'int main() { int x[3][4]; return sizeof **x + 1; }'
 assert 16 'int main() { int x[3][4]; return sizeof(**x + 1); }'
 
+assert 0 'int x; int main() { return x; }'
+assert 3 'int x; int main() { x=3; return x; }'
+assert 0 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[0]; }'
+assert 1 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[1]; }'
+assert 2 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[2]; }'
+assert 3 'int x[4]; int main() { x[0]=0; x[1]=1; x[2]=2; x[3]=3; return x[3]; }'
+
+assert 16 'int x; int main() { return sizeof(x); }'
+assert 64 'int x[4]; int main() { return sizeof(x); }'
+
 echo OK

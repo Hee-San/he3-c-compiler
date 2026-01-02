@@ -19,15 +19,25 @@ void gen_pop(char *register_name) {
   printf("  ldr %s, [sp], #16\n", register_name); // x0 = *sp; sp += 16;
 }
 
+// ノードのアドレスをx0に格納し、スタックにpushする
 void gen_addr(Node *node) {
   switch (node->kind) {
-  case ND_LOCAL_VAR: {
-    int offset = node->var->offset;
-    printf("  sub x0, x29, #%d\n", offset);
+  case ND_VAR: {
+    Var *var = node->var;
+    if (var->is_local) {
+      // ローカル変数: フレームポインタ(x29)からの相対オフセット
+      int offset = node->var->offset;
+      printf("  sub x0, x29, #%d\n", offset);
+    } else {
+      // グローバル変数: ラベルの絶対アドレスを取得
+      // ldr =label はアセンブラがリテラルプールに展開する
+      printf("  ldr x0, =%s\n", var->name);
+    }
     gen_push("x0");
     return;
   }
   case ND_DEREF:
+    // *ptr: ptrの値がアドレスそのもの
     gen(node->lhs);
     return;
   default:
@@ -73,7 +83,7 @@ void gen(Node *node) {
     printf(
         "  add sp, sp, #16\n"); // スタックポインタを16バイト上げる (領域解放)
     return;
-  case ND_LOCAL_VAR:
+  case ND_VAR:
     gen_addr(node);
     if (node->ty->kind != TY_ARRAY) {
       load();
@@ -276,7 +286,19 @@ void gen(Node *node) {
   gen_push("x0");
 }
 
-void codegen(Program *prog) {
+// グローバル変数のデータセクションを出力する
+void emit_global_vars(Program *prog) {
+  printf(".data\n");
+  for (VarList *vl = prog->global_vars; vl; vl = vl->next) {
+    Var *var = vl->var;
+    printf(".globl %s\n", var->name);
+    printf("%s:\n", var->name);
+    printf("  .zero %d\n", size_of(var->ty));
+  }
+}
+
+// 関数のコードセクションを出力する
+void emit_functions(Program *prog) {
   printf("  .text\n");
 
   for (Function *fn = prog->fns; fn; fn = fn->next) {
@@ -308,4 +330,9 @@ void codegen(Program *prog) {
     printf("  ldp x29, x30, [sp], #16\n");
     printf("  ret\n");
   }
+}
+
+void codegen(Program *prog) {
+  emit_global_vars(prog);
+  emit_functions(prog);
 }

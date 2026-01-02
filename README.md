@@ -42,7 +42,10 @@ echo $?  # 終了コードとして結果が返される
 ## 文法定義 (EBNF)
 
 ```
-program       ::= function*
+program       ::= (global-var | function)*
+
+global-var    ::= basetype ident type-suffix ";"
+
 function      ::= basetype ident "(" func-params? ")" "{" stmt* "}"
 
 basetype      ::= "int" "*"*
@@ -69,10 +72,9 @@ add           ::= mul (("+" | "-") mul)*
 mul           ::= unary (("*" | "/") unary)*
 unary         ::= ("+" | "-" | "*" | "&")? unary
                 | postfix
-
 postfix       ::= primary ("[" expr "]")*
-
 primary       ::= "(" expr ")" | "sizeof" unary | ident func-args? | num
+
 func-args     ::= "(" (assign ("," assign)*)? ")"
 ```
 
