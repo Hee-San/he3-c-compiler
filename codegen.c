@@ -7,7 +7,8 @@ int labelseq = 0;
 char *func_name;
 
 // 引数を格納するレジスタの名前
-char *argreg[] = {"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"};
+char *argreg1[] = {"w0", "w1", "w2", "w3", "w4", "w5", "w6", "w7"};
+char *argreg8[] = {"x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"};
 
 void gen(Node *node);
 
@@ -55,18 +56,27 @@ void gen_lval(Node *node) {
 }
 
 // スタックトップにあるアドレスから値をロードして、値をスタックにプッシュする
-void load() {
+void load(Type *ty) {
   gen_pop("x0"); // スタックからアドレスを取り出してx0にロード
-  printf("  ldr x0, [x0]\n"); // x0が指すアドレスから値をロード
-  gen_push("x0");             // x0をスタックにプッシュ
+  if (size_of(ty) == 1) {
+    printf("  ldrsb w0, [x0]\n"); // 1バイトレジスタ
+  } else {
+    printf("  ldr x0, [x0]\n"); // 8バイトレジスタ
+  }
+  gen_push("x0"); // x0をスタックにプッシュ
 }
 
 // スタックトップにある値をスタック2番目にあるアドレスにストアして、値を再びスタックにプッシュする
-void store() {
+void store(Type *ty) {
   gen_pop("x1"); // スタックから値を取り出してx1にロード
   gen_pop("x0"); // スタックからアドレスを取り出してx0にロード
-  printf("  str x1, [x0]\n"); // x0が指すアドレスにx1の値をストア
-  gen_push("x1");             // x1をスタックにプッシュ
+
+  if (size_of(ty) == 1) {
+    printf("  strb w1, [x0]\n"); // 1バイトストア
+  } else {
+    printf("  str x1, [x0]\n"); // 8バイトストア
+  }
+  gen_push("x1"); // x1をスタックにプッシュ
 }
 
 void gen(Node *node) {
@@ -86,13 +96,13 @@ void gen(Node *node) {
   case ND_VAR:
     gen_addr(node);
     if (node->ty->kind != TY_ARRAY) {
-      load();
+      load(node->ty);
     }
     return;
   case ND_ASSIGN:
     gen_lval(node->lhs);
     gen(node->rhs);
-    store();
+    store(node->ty);
     return;
   case ND_FUN_CALL: {
     // 現状、引数は8個まで対応
@@ -104,7 +114,7 @@ void gen(Node *node) {
 
     // スタックから逆順でポップして引数レジスタにセット
     for (int i = num_args - 1; i >= 0; i--) {
-      gen_pop(argreg[i]);
+      gen_pop(argreg8[i]);
     }
 
     // 関数呼び出し
@@ -130,7 +140,7 @@ void gen(Node *node) {
   case ND_DEREF:
     gen(node->lhs);
     if (node->ty->kind != TY_ARRAY) {
-      load();
+      load(node->ty);
     }
     return;
   case ND_IF: {
@@ -297,6 +307,15 @@ void emit_global_vars(Program *prog) {
   }
 }
 
+// 引数をスタックに保存する
+void load_arg(Var *var, int idx) {
+  int sz = size_of(var->ty);
+  if (sz == 1)
+    printf("  strb %s, [x29, #-%d]\n", argreg1[idx], var->offset);
+  else
+    printf("  str %s, [x29, #-%d]\n", argreg8[idx], var->offset);
+}
+
 // 関数のコードセクションを出力する
 void emit_functions(Program *prog) {
   printf("  .text\n");
@@ -316,7 +335,7 @@ void emit_functions(Program *prog) {
     for (VarList *var_list = fn->params; var_list; var_list = var_list->next) {
       // 引数はすでにレジスタに入っているので、それをスタックに保存する
       Var *var = var_list->var;
-      printf("  str %s, [x29, #-%d]\n", argreg[i++], var->offset);
+      load_arg(var, i++);
     }
 
     // 各stmtのコードを生成

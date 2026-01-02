@@ -1,5 +1,7 @@
 #include "he3cc.h"
 
+int align_to(int n, int align) { return (n + align - 1) & ~(align - 1); }
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     error("引数の個数が正しくありません");
@@ -25,7 +27,7 @@ int main(int argc, char **argv) {
       offset += size_of(var->ty);
       var->offset = offset;
     }
-    fn->local_var_stack_size = offset;
+    fn->local_var_stack_size = align_to(offset, 16);
   }
   // コード生成する
   codegen(prog);

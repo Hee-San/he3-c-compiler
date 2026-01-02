@@ -48,7 +48,7 @@ global-var    ::= basetype ident type-suffix ";"
 
 function      ::= basetype ident "(" func-params? ")" "{" stmt* "}"
 
-basetype      ::= "int" "*"*
+basetype      ::= ("char" | "int") "*"*
 type-suffix   ::= ("[" num "]")*
 
 func-params   ::= func-param ("," func-param)*

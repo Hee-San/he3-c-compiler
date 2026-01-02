@@ -135,7 +135,7 @@ bool is_alnum(char c) { return is_alpha(c) || ('0' <= c && c <= '9'); }
 // 予約語をマッチングして新しいトークンを返す。マッチしなければNULLを返す
 Token *try_keyword(Token *cur, char **p) {
   static char *keywords[] = {
-      "return", "if", "else", "while", "for", "int", "sizeof",
+      "return", "if", "else", "while", "for", "int", "char", "sizeof",
   };
   for (int i = 0; i < sizeof(keywords) / sizeof(*keywords); i++) {
     int len = strlen(keywords[i]);

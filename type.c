@@ -1,24 +1,28 @@
 #include "he3cc.h"
 
-// 整数型を表すTypeを生成
-Type *int_type() {
+// 新しいTypeを生成する関数
+Type *new_type(TypeKind kind) {
   Type *ty = calloc(1, sizeof(Type));
-  ty->kind = TY_INT;
+  ty->kind = kind;
   return ty;
 }
 
+// 文字型を表すTypeを生成
+Type *char_type() { return new_type(TY_CHAR); }
+
+// 整数型を表すTypeを生成
+Type *int_type() { return new_type(TY_INT); }
+
 // ポインタ型を表すTypeを生成
 Type *pointer_to(Type *base) {
-  Type *ty = calloc(1, sizeof(Type));
-  ty->kind = TY_PTR;
+  Type *ty = new_type(TY_PTR);
   ty->base = base;
   return ty;
 }
 
 // 配列型を表すTypeを生成
 Type *array_of(Type *base, int size) {
-  Type *ty = calloc(1, sizeof(Type));
-  ty->kind = TY_ARRAY;
+  Type *ty = new_type(TY_ARRAY);
   ty->base = base;
   ty->array_size = size;
   return ty;
@@ -26,12 +30,17 @@ Type *array_of(Type *base, int size) {
 
 // 型のサイズを返す関数
 int size_of(Type *ty) {
-  if (ty->kind == TY_INT || ty->kind == TY_PTR) {
+  switch (ty->kind) {
+  case TY_CHAR:
+    return 1;
+  case TY_INT:
+  case TY_PTR:
     return 16;
-  } else if (ty->kind == TY_ARRAY) {
+  case TY_ARRAY:
     return size_of(ty->base) * ty->array_size;
+  default:
+    return 0;
   }
-  return 0;
 }
 
 void visit(Node *node) {

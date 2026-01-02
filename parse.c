@@ -175,10 +175,16 @@ Function *function() {
   return fn;
 }
 
-// basetype = "int" "*"*
+// basetype = ("int" | "char") "*"*
 Type *basetype() {
-  expect("int");
-  Type *ty = int_type();
+  Type *ty;
+  if (consume("char")) {
+    ty = char_type();
+  } else {
+    expect("int");
+    ty = int_type();
+  }
+
   while (consume("*")) {
     ty = pointer_to(ty);
   }
@@ -224,6 +230,8 @@ VarList *func_param() {
   vl->var = push_var(name, ty, true);
   return vl;
 }
+
+bool is_type_name() { return peek("int") || peek("char"); }
 
 // stmt = "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
@@ -295,7 +303,7 @@ Node *stmt() {
     return node;
   }
 
-  if (peek("int")) {
+  if (is_type_name()) {
     return declaration();
   }
 

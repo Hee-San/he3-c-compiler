@@ -148,6 +148,7 @@ Program *program();
 //
 
 typedef enum {
+  TY_CHAR,
   TY_INT,
   TY_PTR,
   TY_ARRAY,
@@ -159,6 +160,7 @@ struct Type {
   int array_size; // 配列型の場合、要素数
 };
 
+Type *char_type();
 Type *int_type();
 Type *pointer_to(Type *base);
 Type *array_of(Type *base, int size);
