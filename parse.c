@@ -295,7 +295,7 @@ Node *stmt() {
     Node *node = new_node(ND_FOR, tok);
     expect("(");
     if (!consume(";")) {
-      node->init = expr();
+      node->init = new_node_unary_op(ND_EXPR_STMT, expr(), tok); 
       expect(";");
     }
     if (!consume(";")) {
@@ -303,7 +303,7 @@ Node *stmt() {
       expect(";");
     }
     if (!consume(")")) {
-      node->inc = expr();
+      node->inc = new_node_unary_op(ND_EXPR_STMT, expr(), tok);
       expect(")");
     }
     node->then = stmt();
