@@ -92,7 +92,7 @@ Var *push_var(char *name, Type *ty, bool is_local) {
 char *new_label() {
   static int cnt = 0;
   char buf[20];
-  sprintf(buf, ".L.data.%d", cnt++);
+  sprintf(buf, "data.%d", cnt++);
   return duplicate_string_n(buf, 20);
 }
 
