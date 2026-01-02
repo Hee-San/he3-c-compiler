@@ -21,14 +21,17 @@ void gen_pop(char *register_name) {
 
 void gen_addr(Node *node) {
   switch (node->kind) {
-  case ND_LOCAL_VAR:
+  case ND_LOCAL_VAR: {
     int offset = node->var->offset;
     printf("  sub x0, x29, #%d\n", offset);
     gen_push("x0");
     return;
+  }
   case ND_DEREF:
     gen(node->lhs);
     return;
+  default:
+    break;
   }
 
   error_tok(node->tok, "代入の左辺値が変数ではありません");
@@ -81,7 +84,7 @@ void gen(Node *node) {
     gen(node->rhs);
     store();
     return;
-  case ND_FUN_CALL:
+  case ND_FUN_CALL: {
     // 現状、引数は8個まで対応
     int num_args = 0;
     for (Node *arg = node->args; arg; arg = arg->next) {
@@ -100,6 +103,7 @@ void gen(Node *node) {
     // 戻り値をスタックにプッシュ
     gen_push("x0");
     return;
+  }
   case ND_RETURN:
     gen(node->lhs);
     gen_pop("x0");
@@ -209,6 +213,8 @@ void gen(Node *node) {
 
     return;
   }
+  default:
+    break;
   }
 
   gen(node->lhs);
@@ -262,6 +268,8 @@ void gen(Node *node) {
   case ND_GE:
     printf("  cmp x0, x1\n");
     printf("  cset x0, ge\n");
+    break;
+  default:
     break;
   }
 

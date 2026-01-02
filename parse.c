@@ -196,13 +196,13 @@ VarList *func_param() {
 //      | expr ";"
 Node *stmt() {
   Token *tok;
-  if (tok = consume("return")) {
+  if ((tok = consume("return"))) {
     Node *node = new_node_unary_op(ND_RETURN, expr(), tok);
     expect(";");
     return node;
   }
 
-  if (tok = consume("if")) {
+  if ((tok = consume("if"))) {
     Node *node = new_node(ND_IF, tok);
     expect("(");
     node->cond = expr();
@@ -214,7 +214,7 @@ Node *stmt() {
     return node;
   }
 
-  if (tok = consume("while")) {
+  if ((tok = consume("while"))) {
     Node *node = new_node(ND_WHILE, tok);
     expect("(");
     node->cond = expr();
@@ -223,7 +223,7 @@ Node *stmt() {
     return node;
   }
 
-  if (tok = consume("for")) {
+  if ((tok = consume("for"))) {
     Node *node = new_node(ND_FOR, tok);
     expect("(");
     if (!consume(";")) {
@@ -242,7 +242,7 @@ Node *stmt() {
     return node;
   }
 
-  if (tok = consume("{")) {
+  if ((tok = consume("{"))) {
     Node *node = new_node(ND_BLOCK, tok);
     Node head;
     head.next = NULL;
@@ -294,7 +294,7 @@ Node *expr() { return assign(); }
 Node *assign() {
   Node *node = equality();
   Token *tok;
-  if (tok = consume("="))
+  if ((tok = consume("=")))
     node = new_node_binary_op(ND_ASSIGN, node, assign(), tok);
   return node;
 }
@@ -305,9 +305,9 @@ Node *equality() {
   Token *tok;
 
   for (;;) {
-    if (tok = consume("=="))
+    if ((tok = consume("==")))
       node = new_node_binary_op(ND_EQ, node, relational(), tok);
-    else if (tok = consume("!="))
+    else if ((tok = consume("!=")))
       node = new_node_binary_op(ND_NE, node, relational(), tok);
     else
       return node;
@@ -320,13 +320,13 @@ Node *relational() {
   Token *tok;
 
   for (;;) {
-    if (tok = consume("<"))
+    if ((tok = consume("<")))
       node = new_node_binary_op(ND_LT, node, add(), tok);
-    else if (tok = consume("<="))
+    else if ((tok = consume("<=")))
       node = new_node_binary_op(ND_LE, node, add(), tok);
-    else if (tok = consume(">"))
+    else if ((tok = consume(">")))
       node = new_node_binary_op(ND_GT, node, add(), tok);
-    else if (tok = consume(">="))
+    else if ((tok = consume(">=")))
       node = new_node_binary_op(ND_GE, node, add(), tok);
     else
       return node;
@@ -339,9 +339,9 @@ Node *add() {
   Token *tok;
 
   for (;;) {
-    if (tok = consume("+"))
+    if ((tok = consume("+")))
       node = new_node_binary_op(ND_ADD, node, mul(), tok);
-    else if (tok = consume("-"))
+    else if ((tok = consume("-")))
       node = new_node_binary_op(ND_SUB, node, mul(), tok);
     else
       return node;
@@ -354,9 +354,9 @@ Node *mul() {
   Token *tok;
 
   for (;;) {
-    if (tok = consume("*"))
+    if ((tok = consume("*")))
       node = new_node_binary_op(ND_MUL, node, unary(), tok);
-    else if (tok = consume("/"))
+    else if ((tok = consume("/")))
       node = new_node_binary_op(ND_DIV, node, unary(), tok);
     else
       return node;
@@ -366,13 +366,13 @@ Node *mul() {
 // unary = ("+" | "-" | "*" | "&")? unary | postfix
 Node *unary() {
   Token *tok;
-  if (tok = consume("+"))
+  if ((tok = consume("+")))
     return unary();
-  if (tok = consume("-"))
+  if ((tok = consume("-")))
     return new_node_binary_op(ND_SUB, new_node_num(0, tok), unary(), tok);
-  if (tok = consume("*"))
+  if ((tok = consume("*")))
     return new_node_unary_op(ND_DEREF, unary(), tok);
-  if (tok = consume("&"))
+  if ((tok = consume("&")))
     return new_node_unary_op(ND_ADDR, unary(), tok);
   return postfix();
 }
@@ -382,7 +382,7 @@ Node *postfix() {
   Node *node = primary();
   Token *tok;
 
-  while (tok = consume("[")) {
+  while ((tok = consume("["))) {
     // x[i] は *(x+i) の構文糖衣
     Node *exp = new_node_binary_op(ND_ADD, node, expr(), tok);
     expect("]");
@@ -400,7 +400,7 @@ Node *primary() {
     return node;
   }
 
-  if (tok = consume_ident()) {
+  if ((tok = consume_ident())) {
     if (consume("(")) {
       Node *node = new_node(ND_FUN_CALL, tok);
       node->func_name = duplicate_string_n(tok->str, tok->len);
@@ -415,7 +415,7 @@ Node *primary() {
     return new_local_var(var, tok);
   }
 
-  if (tok = consume("sizeof")) {
+  if ((tok = consume("sizeof"))) {
     return new_node_unary_op(ND_SIZEOF, unary(), tok);
   }
 

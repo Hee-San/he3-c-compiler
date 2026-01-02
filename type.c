@@ -31,6 +31,7 @@ int size_of(Type *ty) {
   } else if (ty->kind == TY_ARRAY) {
     return size_of(ty->base) * ty->array_size;
   }
+  return 0;
 }
 
 void visit(Node *node) {
@@ -123,6 +124,9 @@ void visit(Node *node) {
     node->val = size_of(node->lhs->ty);
     node->lhs = NULL; // 子ノードは不要になる
     return;
+
+  default:
+    break;
   }
 }
 
