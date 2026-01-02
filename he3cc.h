@@ -78,6 +78,7 @@ typedef enum {
   ND_FOR,       // "for"
   ND_SIZEOF,    // "sizeof"
   ND_BLOCK,     // ブロック { ... }
+  ND_STMT_EXPR, // GNU拡張の式文 ({ ... })
   ND_FUN_CALL,  // 関数呼び出し
   ND_EXPR_STMT, // 式文
   ND_VAR,       // 変数
@@ -130,7 +131,7 @@ struct Node {
   char *func_name; // 関数名
   Node *args;      // 引数リスト
 
-  Node *body; // kindがND_BLOCKの場合に使う文のリスト
+  Node *body; // kindがND_BLOCK, ND_STMT_EXPRの場合に使う文のリスト
 };
 
 // 関数を表す型

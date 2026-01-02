@@ -70,10 +70,16 @@ equality      ::= relational (("==" | "!=") relational)*
 relational    ::= add (("<" | "<=" | ">" | ">=") add)*
 add           ::= mul (("+" | "-") mul)*
 mul           ::= unary (("*" | "/") unary)*
-unary         ::= ("+" | "-" | "*" | "&")? unary
-                | postfix
+unary         ::= ("+" | "-" | "*" | "&")? unary | postfix
 postfix       ::= primary ("[" expr "]")*
-primary       ::= "(" expr ")" | "sizeof" unary | ident func-args? | num
+primary       ::= stmt-expr
+                | "(" expr ")"
+                | "sizeof" unary
+                | ident func-args?
+                | str
+                | num
+
+stmt-expr     ::= "(" "{" stmt+ "}" ")"
 
 func-args     ::= "(" (assign ("," assign)*)? ")"
 ```

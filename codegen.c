@@ -135,6 +135,7 @@ void gen(Node *node) {
     printf("  b .L.return.%s\n", func_name);
     return;
   case ND_BLOCK:
+  case ND_STMT_EXPR:
     for (Node *n = node->body; n; n = n->next) {
       gen(n);
     }

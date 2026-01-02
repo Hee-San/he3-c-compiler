@@ -134,6 +134,15 @@ void visit(Node *node) {
     node->lhs = NULL; // 子ノードは不要になる
     return;
 
+  // GNU拡張の式文: 最後の文の型を継承
+  case ND_STMT_EXPR: {
+    Node *last = node->body;
+    while (last->next)
+      last = last->next;
+    node->ty = last->ty;
+    return;
+  }
+
   default:
     break;
   }

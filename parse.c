@@ -124,10 +124,13 @@ Node *unary();
 Node *postfix();
 Node *primary();
 
+// GNU拡張の式文
+Node *stmt_expr();
+
 // 関数呼び出し引数
 Node *func_args();
 
-// 先読み
+// 先読み: 関数定義かどうか
 bool peek_is_function() {
   Token *saved = token;
   basetype();
@@ -462,9 +465,26 @@ Node *postfix() {
   return node;
 }
 
-// primary = "(" expr ")" | "sizeof" unary | ident func-args? | str | num
+// 先読み: stmt-expr かどうか
+bool peek_is_stmt_expr() {
+  Token *saved = token;
+  bool result = consume("(") && consume("{");
+  token = saved;
+  return result;
+}
+
+// primary = "(" "{" stmt-expr-tail
+//         | "(" expr ")"
+//         | "sizeof" unary
+//         | ident func-args?
+//         | str
+//         | num
 Node *primary() {
   Token *tok;
+
+  if (peek_is_stmt_expr())
+    return stmt_expr();
+
   if (consume("(")) {
     Node *node = expr();
     expect(")");
@@ -507,6 +527,32 @@ Node *primary() {
     error_tok(tok, "式が必要です");
 
   return new_node_num(expect_number(), tok);
+}
+
+// stmt-expr = "(" "{" stmt+ "}" ")"
+Node *stmt_expr() {
+  Token *tok = token;
+  expect("(");
+  expect("{");
+
+  VarList *sc = scope_vars;
+
+  Node *node = new_node(ND_STMT_EXPR, tok);
+  node->body = stmt();
+  Node *cur = node->body;
+
+  while (!consume("}")) {
+    cur->next = stmt();
+    cur = cur->next;
+  }
+  expect(")");
+
+  scope_vars = sc;
+
+  if (cur->kind != ND_EXPR_STMT)
+    error_tok(cur->tok, "voidを返すstatement expressionはサポートしていません");
+  *cur = *cur->lhs;
+  return node;
 }
 
 // func-args = "(" (assign ("," assign)*)? ")"
