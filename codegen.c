@@ -31,7 +31,7 @@ void gen_addr(Node *node) {
     } else {
       // グローバル変数: ラベルの絶対アドレスを取得
       // ldr =label はアセンブラがリテラルプールに展開する
-      printf("  ldr x0, =%s\n", var->name);
+      printf("  ldr x0, =.L.%s\n", var->name);
     }
     gen_push("x0");
     return;
@@ -117,7 +117,7 @@ void gen(Node *node) {
   case ND_RETURN:
     gen(node->lhs);
     gen_pop("x0");
-    printf("  b .Lreturn.%s\n", func_name);
+    printf("  b .L.return.%s\n", func_name);
     return;
   case ND_BLOCK:
     for (Node *n = node->body; n; n = n->next) {
@@ -143,23 +143,23 @@ void gen(Node *node) {
 
     // 条件の結果が0(false)なら
     if (node->els) {
-      printf("  b.eq .Lelse%d\n", seq); // else節へジャンプ
+      printf("  b.eq .L.if.else.%d\n", seq); // else節へジャンプ
     } else {
-      printf("  b.eq .Lend%d\n", seq); // end節へジャンプ
+      printf("  b.eq .L.if.end.%d\n", seq); // end節へジャンプ
     }
 
     // then節
     gen(node->then);
-    printf("  b .Lend%d\n", seq); // end節へジャンプ
+    printf("  b .L.if.end.%d\n", seq); // end節へジャンプ
 
     if (node->els) {
       // else節
-      printf(".Lelse%d:\n", seq);
+      printf(".L.if.else.%d:\n", seq);
       gen(node->els);
     }
 
     // end節
-    printf(".Lend%d:\n", seq);
+    printf(".L.if.end.%d:\n", seq);
 
     return;
   }
@@ -167,7 +167,7 @@ void gen(Node *node) {
     int seq = labelseq++;
 
     // 繰り返しの開始ラベル
-    printf(".Lbegin%d:\n", seq);
+    printf(".L.while.begin.%d:\n", seq);
 
     // 条件式
     gen(node->cond);
@@ -175,16 +175,16 @@ void gen(Node *node) {
     printf("  cmp x0, #0\n"); // x0と0を比較
 
     // 条件の結果が0(false)なら繰り返し終了
-    printf("  b.eq .Lend%d\n", seq);
+    printf("  b.eq .L.while.end.%d\n", seq);
 
     // 繰り返し本体
     gen(node->then);
 
     // 繰り返しの先頭に戻る
-    printf("  b .Lbegin%d\n", seq);
+    printf("  b .L.while.begin.%d\n", seq);
 
     // 繰り返しの終了ラベル
-    printf(".Lend%d:\n", seq);
+    printf(".L.while.end.%d:\n", seq);
 
     return;
   }
@@ -196,7 +196,7 @@ void gen(Node *node) {
       gen(node->init);
 
     // 繰り返しの開始ラベル
-    printf(".Lbegin%d:\n", seq);
+    printf(".L.for.begin.%d:\n", seq);
 
     // 条件式
     if (node->cond) {
@@ -205,7 +205,7 @@ void gen(Node *node) {
       printf("  cmp x0, #0\n"); // x0と0を比較
 
       // 条件の結果が0(false)なら繰り返し終了
-      printf("  b.eq .Lend%d\n", seq);
+      printf("  b.eq .L.for.end.%d\n", seq);
     }
 
     // 繰り返し本体
@@ -216,10 +216,10 @@ void gen(Node *node) {
       gen(node->inc);
 
     // 繰り返しの先頭に戻る
-    printf("  b .Lbegin%d\n", seq);
+    printf("  b .L.for.begin.%d\n", seq);
 
     // 繰り返しの終了ラベル
-    printf(".Lend%d:\n", seq);
+    printf(".L.for.end.%d:\n", seq);
 
     return;
   }
@@ -291,8 +291,8 @@ void emit_global_vars(Program *prog) {
   printf(".data\n");
   for (VarList *vl = prog->global_vars; vl; vl = vl->next) {
     Var *var = vl->var;
-    printf(".globl %s\n", var->name);
-    printf("%s:\n", var->name);
+    printf(".globl .L.%s\n", var->name);
+    printf(".L.%s:\n", var->name);
     printf("  .zero %d\n", size_of(var->ty));
   }
 }
@@ -325,7 +325,7 @@ void emit_functions(Program *prog) {
     }
 
     // Epilogue
-    printf(".Lreturn.%s:\n", func_name);
+    printf(".L.return.%s:\n", func_name);
     printf("  mov sp, x29\n");
     printf("  ldp x29, x30, [sp], #16\n");
     printf("  ret\n");
